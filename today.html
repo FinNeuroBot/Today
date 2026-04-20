@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>Today</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface-2: #242424;
+    --surface-3: #2e2e2e;
+    --border: rgba(255,255,255,0.08);
+    --border-2: rgba(255,255,255,0.14);
+    --text: #f5f5f0;
+    --muted: #8a8a82;
+    --dim: #5a5a55;
+    --accent: #c9a961;          /* Warm gold — the "locked-in" signal */
+    --accent-2: #e8d4a0;
+    --green: #7fa650;           /* Completion */
+    --amber: #d99850;           /* Hectic */
+    --red: #c26a5a;             /* Missed / injured */
+    --blue: #6f8fb0;            /* Info / meal */
+    --serif: 'Instrument Serif', Georgia, serif;
+    --sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overscroll-behavior-y: contain;
+  }
+
+  body {
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* ─────────── HEADER ─────────── */
+  header {
+    padding: 1.25rem 1.25rem 0.75rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+  .h-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+  .h-date {
+    font-family: var(--serif);
+    font-size: 1.7rem;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .h-date em { color: var(--accent); }
+  .h-meta {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ─────────── TAB BAR ─────────── */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin: 0 -1.25rem -0.75rem;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 0.7rem 0;
+    margin-right: 1.5rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    font-family: var(--sans);
+    transition: color 0.15s;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab:last-child { margin-right: 0; }
+
+  /* ─────────── SECTIONS ─────────── */
+  main { padding: 1rem 1.25rem 3rem; }
+  .section { display: none; animation: fadeIn 0.2s; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ─────────── MODE STRIP ─────────── */
+  .mode-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 1rem;
+  }
+  .mode-btn {
+    padding: 0.55rem 0.4rem;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-btn.active[data-mode="normal"]  { background: var(--accent); color: #1a1a1a; }
+  .mode-btn.active[data-mode="hectic"]  { background: var(--amber); color: #1a1a1a; }
+  .mode-btn.active[data-mode="injured"] { background: var(--red); color: #1a1a1a; }
+
+  /* ─────────── TODAY HERO ─────────── */
+  .hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.1rem 0.9rem;
+    margin-bottom: 1rem;
+  }
+  .hero-row-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.15rem;
+  }
+  .hero-day {
+    font-family: var(--serif);
+    font-size: 1.55rem;
+    font-style: italic;
+    line-height: 1;
+  }
+  .hero-kcal {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent-2);
+    font-weight: 500;
+  }
+  .hero-type {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.9rem;
+    letter-spacing: 0.01em;
+  }
+  .hero-type .mode-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: 0.4rem;
+    vertical-align: 1px;
+  }
+  .mode-tag.hectic { background: rgba(217,152,80,0.18); color: var(--amber); }
+  .mode-tag.injured { background: rgba(194,106,90,0.18); color: var(--red); }
+
+  /* ─────────── QUICK CHECKS ─────────── */
+  .quick-checks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .q-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.55rem 0.7rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .q-check.checked {
+    background: rgba(127,166,80,0.12);
+    border-color: rgba(127,166,80,0.35);
+    color: var(--green);
+  }
+  .q-check .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1.5px solid var(--muted);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .q-check.checked .dot {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .q-check .dot::after {
+    content: "";
+    width: 7px;
+    height: 4px;
+    border-left: 2px solid #1a1a1a;
+    border-bottom: 2px solid #1a1a1a;
+    transform: rotate(-45deg) translate(1px, -1px);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .q-check.checked .dot::after { opacity: 1; }
+
+  /* ─────────── WEEK STRIP ─────────── */
+  .week-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 1.25rem;
+    padding: 0.7rem 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .w-day {
+    text-align: center;
+  }
+  .w-dow {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .w-dot {
+    width: 100%;
+    height: 6px;
+    background: var(--surface-3);
+    border-radius: 3px;
+  }
+  .w-dot.done { background: var(--green); }
+  .w-dot.hectic { background: var(--amber); }
+  .w-dot.missed { background: var(--red); }
+  .w-dot.today { background: var(--accent); }
+
+  /* ─────────── SECTION HEADERS ─────────── */
+  .sec-h {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 1.5rem 0 0.6rem;
+  }
+  .sec-h h2 {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  .sec-h .sec-sub {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ─────────── MEAL CARDS ─────────── */
+  .meal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .meal.checked { border-color: rgba(127,166,80,0.3); background: rgba(127,166,80,0.04); }
+  .meal-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.8rem 0.9rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .meal-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .meal.checked .meal-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .meal-check::after {
+    content: "";
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid #1a1a1a;
+    border-bottom: 2px solid #1a1a1a;
+    transform: rotate(-45deg) translate(1px, -1px);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .meal.checked .meal-check::after { opacity: 1; }
+  .meal-info { flex: 1; min-width: 0; }
+  .meal-time {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .meal-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-top: 1px;
+    color: var(--text);
+  }
+  .meal.checked .meal-name { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(138,138,130,0.5); }
+  .meal-macros {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--accent-2);
+  }
+  .meal-expand {
+    color: var(--muted);
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    width: 12px;
+  }
+  .meal.open .meal-expand { transform: rotate(180deg); }
+  .meal-body {
+    display: none;
+    padding: 0 0.9rem 0.9rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.8rem;
+    margin-top: 2px;
+  }
+  .meal.open .meal-body { display: block; }
+  .meal-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    line-height: 1.55;
+  }
+  .ing-list {
+    list-style: none;
+    font-size: 0.83rem;
+    margin-bottom: 0.8rem;
+  }
+  .ing-list li {
+    padding: 0.25rem 0;
+    color: var(--text);
+    border-bottom: 1px dashed var(--border);
+  }
+  .ing-list li:last-child { border: none; }
+  .ing-list li::before {
+    content: "—";
+    color: var(--dim);
+    margin-right: 8px;
+  }
+  .macro-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    background: var(--surface-2);
+    padding: 0.55rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+  }
+  .mb-cell { text-align: center; }
+  .mb-v { font-family: var(--mono); font-size: 0.9rem; font-weight: 500; color: var(--accent-2); }
+  .mb-l { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+
+  /* ─────────── WORKOUT ─────────── */
+  .workout-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .wo-title {
+    font-family: var(--serif);
+    font-size: 1.45rem;
+    font-style: italic;
+    line-height: 1.1;
+    margin-bottom: 0.15rem;
+  }
+  .wo-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.8rem;
+  }
+  .wo-meta {
+    display: flex;
+    gap: 1rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent-2);
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+  }
+  .wo-meta span { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .wo-meta strong { color: var(--text); font-weight: 500; margin-left: 3px; }
+
+  .ex {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 6px;
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .ex.done {
+    background: rgba(127,166,80,0.06);
+    border-color: rgba(127,166,80,0.25);
+  }
+  .ex-num {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--dim);
+    width: 18px;
+    flex-shrink: 0;
+  }
+  .ex.done .ex-num { color: var(--green); }
+  .ex-info { flex: 1; min-width: 0; }
+  .ex-name { font-size: 0.88rem; font-weight: 500; line-height: 1.3; }
+  .ex.done .ex-name { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(138,138,130,0.4); }
+  .ex-prescribe {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent-2);
+    margin-top: 2px;
+  }
+  .ex-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 3px;
+    font-style: italic;
+  }
+  .ex-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ex.done .ex-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .ex-check::after {
+    content: "";
+    width: 8px;
+    height: 4px;
+    border-left: 2px solid #1a1a1a;
+    border-bottom: 2px solid #1a1a1a;
+    transform: rotate(-45deg) translate(1px, -1px);
+    opacity: 0;
+  }
+  .ex.done .ex-check::after { opacity: 1; }
+
+  /* ─────────── BAD DAY ALTERNATIVES ─────────── */
+  .alt-callout {
+    background: linear-gradient(135deg, rgba(217,152,80,0.08), rgba(217,152,80,0.03));
+    border: 1px solid rgba(217,152,80,0.25);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .alt-callout.injured {
+    background: linear-gradient(135deg, rgba(194,106,90,0.08), rgba(194,106,90,0.03));
+    border-color: rgba(194,106,90,0.25);
+  }
+  .alt-h {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+  }
+  .alt-callout.injured .alt-h { color: var(--red); }
+  .alt-text {
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .alt-text strong { color: var(--accent-2); font-weight: 500; }
+
+  /* ─────────── TOMORROW PREVIEW ─────────── */
+  .tomorrow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    margin-top: 1rem;
+  }
+  .tom-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .tom-title {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+  .tom-prep {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ─────────── GROCERY ─────────── */
+  .groc-toggle {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 1rem;
+  }
+  .groc-toggle button {
+    flex: 1;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: var(--sans);
+    cursor: pointer;
+  }
+  .groc-toggle button.active {
+    background: var(--accent);
+    color: #1a1a1a;
+  }
+  .store {
+    margin-bottom: 1.25rem;
+  }
+  .store-h {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+    color: var(--accent-2);
+  }
+  .store-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+    margin-top: -0.3rem;
+  }
+  .groc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.7rem 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .groc-item.checked {
+    opacity: 0.45;
+    background: var(--surface-2);
+  }
+  .groc-item.checked .g-name { text-decoration: line-through; color: var(--muted); }
+  .g-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border-2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .groc-item.checked .g-check { background: var(--accent); border-color: var(--accent); }
+  .g-check::after {
+    content: "";
+    width: 7px; height: 4px;
+    border-left: 2px solid #1a1a1a;
+    border-bottom: 2px solid #1a1a1a;
+    transform: rotate(-45deg) translate(1px, -1px);
+    opacity: 0;
+  }
+  .groc-item.checked .g-check::after { opacity: 1; }
+  .g-body { flex: 1; min-width: 0; }
+  .g-name { font-size: 0.9rem; font-weight: 500; }
+  .g-meta { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+  .g-price { font-family: var(--mono); font-size: 0.72rem; color: var(--green); flex-shrink: 0; }
+
+  /* ─────────── WEEK AT A GLANCE ─────────── */
+  .week-view .w-day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .w-day-card.is-today { border-color: var(--accent); background: rgba(201,169,97,0.04); }
+  .wd-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--surface-3);
+    flex-shrink: 0;
+  }
+  .wd-dot.done { background: var(--green); }
+  .wd-dot.hectic { background: var(--amber); }
+  .wd-dot.missed { background: var(--red); }
+  .wd-dot.today { background: var(--accent); box-shadow: 0 0 0 3px rgba(201,169,97,0.2); }
+  .wd-info { flex: 1; }
+  .wd-dow {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .wd-type { font-size: 0.92rem; font-weight: 500; margin-top: 1px; }
+  .wd-kcal { font-family: var(--mono); font-size: 0.72rem; color: var(--accent-2); }
+
+  /* ─────────── COMING BACK ─────────── */
+  .cb-btn {
+    width: 100%;
+    background: var(--surface);
+    border: 1px dashed var(--border-2);
+    border-radius: 10px;
+    padding: 0.9rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-family: var(--sans);
+    cursor: pointer;
+    margin-top: 0.75rem;
+  }
+  .cb-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .cb-active {
+    background: rgba(201,169,97,0.08);
+    border: 1px solid rgba(201,169,97,0.3);
+    border-radius: 10px;
+    padding: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  .cb-active .cb-h {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+  .cb-active .cb-t {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─────────── SETTINGS / MISC ─────────── */
+  .settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-row:last-child { border: none; }
+  .sr-label { font-size: 0.88rem; }
+  .sr-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .sr-action {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+  }
+  .sr-action.danger { color: var(--red); }
+
+  .pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+  .pill.batch { background: rgba(127,166,80,0.15); color: var(--green); }
+  .pill.tight { background: rgba(194,106,90,0.15); color: var(--red); }
+
+  .prep-note {
+    background: rgba(201,169,97,0.08);
+    border: 1px solid rgba(201,169,97,0.2);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.78rem;
+    color: var(--accent-2);
+    margin-bottom: 0.75rem;
+  }
+  .prep-note strong { color: var(--accent); }
+
+  .install-banner {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .install-banner strong { color: var(--accent); }
+  .install-banner.show { display: block; }
+  .close-banner {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    margin-top: -2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-top">
+    <div class="h-date">Today<em>.</em></div>
+    <div class="h-meta" id="h-week">Week 1</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="today">Today</button>
+    <button class="tab" data-tab="week">Week</button>
+    <button class="tab" data-tab="grocery">Grocery</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════ TODAY ══════════════ -->
+<div class="section active" id="tab-today">
+
+  <div class="mode-strip" id="mode-strip">
+    <button class="mode-btn active" data-mode="normal">Normal</button>
+    <button class="mode-btn" data-mode="hectic">Hectic</button>
+    <button class="mode-btn" data-mode="injured">Injured / Sick</button>
+  </div>
+
+  <div id="cb-container"></div>
+
+  <div class="hero">
+    <div class="hero-row-1">
+      <div class="hero-day" id="hero-day">Monday</div>
+      <div class="hero-kcal" id="hero-kcal">3,300 kcal</div>
+    </div>
+    <div class="hero-type" id="hero-type">Push · Gym 7:32 AM</div>
+
+    <div class="quick-checks">
+      <div class="q-check" data-check="workout"><span class="dot"></span><span>Workout done</span></div>
+      <div class="q-check" data-check="meals"><span class="dot"></span><span>All meals eaten</span></div>
+      <div class="q-check" data-check="steps"><span class="dot"></span><span>10k steps</span></div>
+      <div class="q-check" data-check="supps"><span class="dot"></span><span>Supplements</span></div>
+    </div>
+  </div>
+
+  <div class="week-strip" id="week-strip"></div>
+
+  <div class="sec-h">
+    <h2>Meals</h2>
+    <div class="sec-sub" id="meals-sub">5 meals · 3,300 kcal</div>
+  </div>
+  <div id="meals-list"></div>
+
+  <div class="sec-h">
+    <h2>Workout</h2>
+    <div class="sec-sub" id="wo-sub"></div>
+  </div>
+  <div id="workout-area"></div>
+
+  <div class="tomorrow" id="tomorrow-card">
+    <div class="tom-label">Tomorrow</div>
+    <div class="tom-title" id="tom-title">Pull · Gym 7:32 AM · 3,300 kcal</div>
+    <div class="tom-prep" id="tom-prep">Tonight: pre-mix yogurt bowl (90 sec)</div>
+  </div>
+
+</div>
+
+<!-- ══════════════ WEEK ══════════════ -->
+<div class="section" id="tab-week">
+  <div class="sec-h">
+    <h2>This week</h2>
+    <div class="sec-sub" id="week-label">Week 1</div>
+  </div>
+  <div class="week-view" id="week-cards"></div>
+
+  <div class="sec-h" style="margin-top: 2rem;">
+    <h2>Re-entry</h2>
+    <div class="sec-sub">After a break</div>
+  </div>
+  <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.6rem; line-height: 1.55;">
+    Been off for 3+ days from sickness, injury, or life? Hit this to start back at reduced volume for 2–3 sessions. It's not a penalty — it's how the research says to come back safely.
+  </p>
+  <button class="cb-btn" id="cb-btn">Start "coming back" mode →</button>
+</div>
+
+<!-- ══════════════ GROCERY ══════════════ -->
+<div class="section" id="tab-grocery">
+  <div class="groc-toggle">
+    <button class="active" data-list="full">Full week</button>
+    <button data-list="half">Half week</button>
+  </div>
+  <p style="font-size: 0.78rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.5;" id="groc-intro">
+    WinCo → Costco → Trader Joe's. ~60–75 min total.
+  </p>
+  <div id="grocery-list"></div>
+  <div style="text-align: center; font-family: var(--mono); font-size: 0.85rem; color: var(--accent); margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);" id="groc-total">
+    Total ~$128–158
+  </div>
+</div>
+
+<!-- ══════════════ SETTINGS ══════════════ -->
+<div class="section" id="tab-settings">
+  <div class="sec-h">
+    <h2>Settings</h2>
+    <div class="sec-sub">v1.0</div>
+  </div>
+
+  <div class="install-banner" id="install-banner">
+    <button class="close-banner" onclick="document.getElementById('install-banner').classList.remove('show')">×</button>
+    <strong>Add to home screen:</strong> tap Share → Add to Home Screen. It opens like an app, stays fast, works offline after first load.
+  </div>
+
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Program start date</div>
+      <div class="sr-sub" id="start-date-display">Loading...</div>
+    </div>
+    <button class="sr-action" onclick="setStartDate()">Change</button>
+  </div>
+
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Current week</div>
+      <div class="sr-sub">Auto-calculated from start date</div>
+    </div>
+    <div class="sr-action" id="current-week-display" style="pointer-events: none;">—</div>
+  </div>
+
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Install prompt</div>
+      <div class="sr-sub">Show the home-screen install tip</div>
+    </div>
+    <button class="sr-action" onclick="document.getElementById('install-banner').classList.add('show')">Show</button>
+  </div>
+
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Reset today</div>
+      <div class="sr-sub">Unchecks all of today's items</div>
+    </div>
+    <button class="sr-action" onclick="resetToday()">Reset</button>
+  </div>
+
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Reset all progress</div>
+      <div class="sr-sub">Clears week history and settings</div>
+    </div>
+    <button class="sr-action danger" onclick="resetAll()">Clear all</button>
+  </div>
+
+  <div style="margin-top: 2rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+    <div style="font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--dim); text-transform: uppercase; margin-bottom: 0.5rem;">How this works</div>
+    <p style="font-size: 0.82rem; color: var(--muted); line-height: 1.65;">
+      Your check-offs, mode selections, and week history are stored on this device. Nothing syncs to other devices in v1. If you clear your browser data, progress resets.<br><br>
+      <span style="color: var(--accent-2);">Normal</span> mode = the full plan. <span style="color: var(--amber);">Hectic</span> mode = minimum effective dose, still counts. <span style="color: var(--red);">Injured / Sick</span> mode = rest + mobility, no guilt. All three are legitimate.
+    </p>
+  </div>
+</div>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   DATA — Plan Content
+═══════════════════════════════════════════════════════ */
+
+const PLAN = {
+  0: { // Sunday
+    name: "Sunday",
+    type: "Rest + Meal Prep",
+    tag: "Rest day",
+    kcal: 2476,
+    kcalLabel: "2,476 kcal",
+    gym: null,
+    meals: [
+      {t:"7–8 AM", n:"Turkey & Egg Scramble (Sunday)", p:62,c:15,f:28,k:560,
+       d:"5 eggs + 100g turkey + spinach + salsa. Cook properly, no rush. 5th egg hits 190g daily protein minimum.",
+       ing:["5 large eggs","100g ground turkey (93/7)","Spinach (fresh, handful)","Salsa (2 tbsp)"]},
+      {t:"12 PM", n:"Black Bean & Egg Burrito Bowl", p:38,c:55,f:22,k:560,
+       d:"3 eggs + 2 whites + black beans + ½ cup brown rice + avocado + salsa.",
+       ing:["3 whole eggs + 2 whites","½ cup canned black beans (drained)","½ cup cooked brown rice","¼ avocado","Salsa + cilantro"]},
+      {t:"3 PM", n:"Greek Yogurt Snack", p:28,c:20,f:0,k:200,
+       d:"200g Fage 0% + honey + berries.",
+       ing:["200g Fage 0%","1 tsp honey","50g berries"]},
+      {t:"7 PM", n:"Turkey & Lentil Chili + Rice", p:48,c:72,f:14,k:620,
+       d:"Reheated from Sunday batch. 280g rice on the side.",
+       ing:["1 bowl turkey & lentil chili (batch)","280g cooked white rice","Greek yogurt (dollop)","Hot sauce"]},
+      {t:"10 PM", n:"Pre-Sleep Casein Bowl (rest)", p:43,c:25,f:2,k:290,
+       d:"300g Fage 0% + ½ scoop Ascent + honey + Magnesium 300mg. Rest day — no banana.",
+       ing:["300g Fage 0% Greek yogurt","½ scoop Ascent vanilla whey","1 tbsp honey","Magnesium glycinate 300mg"]}
+    ],
+    workout: {
+      title: "Meal Prep Day",
+      sub: "No training. 2:00–4:00 PM prep block.",
+      duration: "~60 min active",
+      exercises: [
+        {n:"Batch cook turkey & lentil chili (Instant Pot)",r:"20 min high pressure"},
+        {n:"Cook 4 cups dry white rice",r:"18–20 min stove"},
+        {n:"Grill 1.2kg chicken, portion into 150g + 130g bags",r:"~6 min/side"},
+        {n:"Make 4 overnight oat jars",r:"5 min"},
+        {n:"Pre-mix Monday's yogurt bowl",r:"2 min"},
+        {n:"30-min walk + mobility",r:"Optional but useful"}
+      ]
+    },
+    alt: null
+  },
+  1: { // Monday
+    name: "Monday",
+    type: "Push",
+    tag: "Push · Gym 7:32 AM",
+    kcal: 3039,
+    kcalLabel: "3,300 kcal target",
+    gym: "7:32 AM",
+    meals: [
+      {t:"7:00 AM", n:"Greek Yogurt Protein Bowl", p:51,c:78,f:6,k:595, tight:true,
+       d:"Pre-mixed Sunday night — 90 seconds assembly. ~22 min window before gym.",
+       ing:["200g Fage 0%","1 scoop Ascent vanilla whey","100g mixed berries","100g frozen mango (thawed)","40g rolled oats","1 tsp honey"]},
+      {t:"9:15 AM", n:"Chicken & Rice Power Bowl", p:59,c:92,f:26,k:855, batch:true,
+       d:"150g batch chicken + 300g white rice + broccoli. Post-workout. Creatine 5g.",
+       ing:["150g batch-cooked chicken breast","300g cooked white rice","90g broccoli florets","1 tbsp olive oil","Soy sauce + sesame oil + sriracha"]},
+      {t:"10:30 AM", n:"Lifting Day Snack", p:3,c:45,f:1,k:200,
+       d:"Closes the lifting day carb gap between post-workout and lunch.",
+       ing:["1 banana","3 medjool dates"]},
+      {t:"1:00 PM", n:"Chicken Souvlaki Rice Bowl", p:57,c:58,f:18,k:610, batch:true,
+       d:"130g batch chicken + brown rice + tzatziki + veggies.",
+       ing:["130g batch-cooked chicken","185g cooked brown rice","2 tbsp tzatziki","½ cucumber + ½ bell pepper","Spinach (handful)"]},
+      {t:"8:00 PM", n:"Turkey & Veggie Stir-Fry", p:56,c:55,f:14,k:560,
+       d:"Fresh cook — 15 min total.",
+       ing:["200g ground turkey","½ bell pepper + ½ zucchini","200g cooked rice","Soy sauce + sesame oil"]},
+      {t:"10:00 PM", n:"Pre-Sleep Casein Bowl", p:48,c:28,f:2,k:320,
+       d:"350g Fage + ½ scoop Ascent + honey + ½ banana + Mag 300mg.",
+       ing:["350g Fage 0%","½ scoop Ascent","1 tbsp honey","½ banana","Magnesium 300mg"]}
+    ],
+    workout: {
+      title: "Push",
+      sub: "Chest, shoulders, triceps",
+      duration: "~55 min",
+      exercises: [
+        {n:"Barbell flat bench",r:"4 × 10–12 · RIR 3–4",note:"Week 1: 60% 1RM. Focus on form."},
+        {n:"Incline DB press",r:"3 × 10–12 · RIR 3"},
+        {n:"Standing OHP",r:"3 × 10–12 · RIR 3"},
+        {n:"Cable lateral raise",r:"2 × 12–15 · RIR 2",note:"Slow eccentric."},
+        {n:"Overhead tricep extension",r:"2 × 10–12"},
+        {n:"Core: plank + dead bug",r:"2 × 20 sec + 2 × 8/side"}
+      ]
+    },
+    alt: {
+      hectic: "20-min version: <strong>bench press 3×8</strong>, <strong>OHP 2×10</strong>, done. Same protein target, skip the snack if not hungry.",
+      injured: "Rest. Walk 20 min if body allows. Eat to protein target (190g), carbs lower (~200g). No guilt."
+    }
+  },
+  2: { // Tuesday
+    name: "Tuesday",
+    type: "Pull",
+    tag: "Pull · Gym 7:32 AM (or PM — see note)",
+    kcal: 3039,
+    kcalLabel: "3,300 kcal target",
+    gym: "7:32 AM",
+    meals: [
+      {t:"7:00 AM", n:"Overnight Oat Jar", p:45,c:68,f:14,k:540,
+       d:"Grab from fridge — pre-made Sunday.",
+       ing:["150g Fage 0%","60g rolled oats","1 scoop Ascent","150ml oat milk","1 tbsp chia seeds","Berries"]},
+      {t:"9:15 AM", n:"Chicken & Rice Power Bowl", p:59,c:92,f:26,k:855, batch:true,
+       d:"Same post-workout template as Monday.",
+       ing:["150g batch chicken","300g white rice","90g broccoli","1 tbsp olive oil","Soy + sesame"]},
+      {t:"2:00 PM", n:"Chicken Souvlaki Rice Bowl", p:57,c:58,f:18,k:610, batch:true,
+       d:"Lunch. Quick assembly from batch.",
+       ing:["130g batch chicken","185g cooked brown rice","Tzatziki","Cucumber + bell pepper + spinach"]},
+      {t:"3:15 PM", n:"Banana", p:1,c:27,f:0,k:105,
+       d:"Timed carb top-up.",
+       ing:["1 banana"]},
+      {t:"7:30 PM", n:"Baked Salmon & Sweet Potato", p:46,c:40,f:22,k:560,
+       d:"Omega-3s.",
+       ing:["200g salmon","200g sweet potato","Zucchini","Olive oil + lemon"]},
+      {t:"10:00 PM", n:"Pre-Sleep Casein Bowl", p:48,c:28,f:2,k:320,
+       d:"Standard lifting-day version.",
+       ing:["350g Fage","½ scoop Ascent","Honey","½ banana","Mag 300mg"]}
+    ],
+    workout: {
+      title: "Pull",
+      sub: "Back, biceps, rear delts",
+      duration: "~55 min",
+      exercises: [
+        {n:"Lat pulldown (or pull-up)",r:"3 × 10 · RIR 3–4"},
+        {n:"Barbell bent-over row",r:"3 × 10 · RIR 3"},
+        {n:"Seated cable row",r:"3 × 12 · RIR 2–3"},
+        {n:"Cable face pull",r:"2 × 15 · RIR 2",note:"Don't skip. Shoulder health."},
+        {n:"Incline DB curl",r:"2 × 12"},
+        {n:"Hammer curl",r:"2 × 12"},
+        {n:"Core: Pallof press",r:"2 × 8/side"}
+      ]
+    },
+    alt: {
+      hectic: "20-min version: <strong>lat pulldown 3×10</strong>, <strong>barbell row 2×8</strong>, done.",
+      injured: "Rest. Walk if tolerable. Protein target stays 190g."
+    }
+  },
+  3: { // Wednesday
+    name: "Wednesday",
+    type: "Legs",
+    tag: "Legs · Gym 7:32 AM",
+    kcal: 3039,
+    kcalLabel: "3,300 kcal target",
+    gym: "7:32 AM",
+    meals: [
+      {t:"7:00 AM", n:"Greek Yogurt Protein Bowl", p:51,c:78,f:6,k:595, tight:true,
+       d:"Pre-mixed Tuesday night.",
+       ing:["200g Fage 0%","1 scoop Ascent","100g berries","100g mango","40g oats","Honey"]},
+      {t:"9:15 AM", n:"Chicken & Rice Power Bowl", p:59,c:92,f:26,k:855, batch:true,
+       d:"Post-workout. Legs = highest glycogen depletion.",
+       ing:["150g batch chicken","300g white rice","90g broccoli","Olive oil + soy"]},
+      {t:"10:30 AM", n:"Lifting Day Snack", p:3,c:45,f:1,k:200,
+       d:"Banana + dates.",
+       ing:["1 banana","3 medjool dates"]},
+      {t:"1:00 PM", n:"Chicken Souvlaki Rice Bowl", p:57,c:58,f:18,k:610, batch:true,
+       d:"Lunch from batch.",
+       ing:["130g batch chicken","185g brown rice","Tzatziki","Cucumber + bell pepper"]},
+      {t:"8:00 PM", n:"Turkey & Lentil Chili + Rice", p:52,c:62,f:12,k:580, batch:true,
+       d:"Sunday batch reheated. Plant + animal protein combo.",
+       ing:["1 bowl chili (batch)","280g cooked rice","Greek yogurt dollop"]},
+      {t:"10:00 PM", n:"Pre-Sleep Casein Bowl", p:48,c:28,f:2,k:320,
+       d:"Recovery matters — legs day hits hardest.",
+       ing:["350g Fage","½ scoop Ascent","Honey","½ banana","Mag 300mg"]}
+    ],
+    workout: {
+      title: "Legs",
+      sub: "Quads, hamstrings, glutes, calves",
+      duration: "~55 min",
+      exercises: [
+        {n:"Barbell back squat",r:"3 × 10 · RIR 3–4",note:"Week 1: 60% 1RM. Go below parallel if mobility allows."},
+        {n:"Romanian deadlift (RDL)",r:"3 × 10 · RIR 3"},
+        {n:"Bulgarian split squat",r:"2 × 10/leg"},
+        {n:"Leg curl",r:"2 × 12"},
+        {n:"Standing calf raise",r:"3 × 12"},
+        {n:"Seated calf",r:"2 × 15"},
+        {n:"Core: bird dog",r:"2 × 6/side"}
+      ]
+    },
+    alt: {
+      hectic: "20-min version: <strong>squat 3×8</strong>, <strong>RDL 2×10</strong>, done.",
+      injured: "Rest. Walking might actually help mild soreness. Listen to your body."
+    }
+  },
+  4: { // Thursday
+    name: "Thursday",
+    type: "Rest + Mobility",
+    tag: "Rest day · TA 8:45 AM",
+    kcal: 2400,
+    kcalLabel: "2,400 kcal (rest day)",
+    gym: null,
+    meals: [
+      {t:"8:30 AM", n:"Turkey & Egg Scramble", p:48,c:12,f:22,k:440,
+       d:"Rest day = time to cook properly.",
+       ing:["4 large eggs","100g ground turkey","Spinach","Salsa"]},
+      {t:"12:00 PM", n:"Black Bean & Egg Burrito Bowl", p:38,c:55,f:22,k:560,
+       d:"Eggs + black beans + brown rice + avocado.",
+       ing:["3 eggs + 2 whites","Black beans","½ cup brown rice","¼ avocado","Salsa"]},
+      {t:"3:00 PM", n:"Greek Yogurt Snack", p:28,c:20,f:0,k:200,
+       d:"Rest day snack — slightly smaller than training day.",
+       ing:["200g Fage 0%","Honey","50g berries"]},
+      {t:"7:00 PM", n:"Turkey & Lentil Chili + Tortillas", p:45,c:50,f:14,k:530, batch:true,
+       d:"Chili + 2 corn tortillas on the side — zero cook.",
+       ing:["1 bowl chili (batch)","2 corn tortillas","Greek yogurt","Hot sauce"]},
+      {t:"10:00 PM", n:"Pre-Sleep Casein Bowl (rest)", p:43,c:25,f:2,k:290,
+       d:"No banana — rest day carbs lower.",
+       ing:["300g Fage","½ scoop Ascent","Honey","Mag 300mg"]}
+    ],
+    workout: {
+      title: "Active Recovery",
+      sub: "Walk + mobility",
+      duration: "20–30 min",
+      exercises: [
+        {n:"20–30 min walk (outside if weather allows)",r:"Zone 2 pace"},
+        {n:"Foam roll: quads, IT band, upper back",r:"5 min total"},
+        {n:"Hip flexor stretch (kneeling)",r:"2 × 45 sec/side"},
+        {n:"T-spine rotations",r:"2 × 8/side"},
+        {n:"Ankle mobility",r:"2 × 10/side"}
+      ]
+    },
+    alt: {
+      hectic: "Skip mobility, just the walk counts. 10 min if that's all you've got.",
+      injured: "Skip walk if it aggravates the injury. Hydrate, eat protein, rest."
+    }
+  },
+  5: { // Friday
+    name: "Friday",
+    type: "Cardio + Core",
+    tag: "Cardio + Core · Gym 7:32–8:45 AM",
+    kcal: 2820,
+    kcalLabel: "2,820 kcal",
+    gym: "7:32 AM",
+    meals: [
+      {t:"7:00 AM", n:"Greek Yogurt Protein Bowl", p:51,c:78,f:6,k:595, tight:true,
+       d:"Pre-mixed Thursday night.",
+       ing:["200g Fage","1 scoop Ascent","Berries + mango","40g oats","Honey"]},
+      {t:"9:00 AM", n:"Chicken & Rice Bowl (cardio)", p:50,c:57,f:16,k:579, batch:true,
+       d:"Smaller than lifting-day version. Cardio depletes less glycogen.",
+       ing:["160g batch chicken","185g white rice (1 cup)","Broccoli","Olive oil + soy"]},
+      {t:"12:30 PM", n:"Black Bean & Egg Burrito (pasta)", p:47,c:62,f:18,k:580,
+       d:"Pasta replaces rice — extra carbs for cardio day.",
+       ing:["3 eggs + 2 whites","Black beans","80g dry whole wheat pasta","¼ avocado","Salsa"]},
+      {t:"8:00 PM", n:"Baked Salmon & Sweet Potato", p:46,c:40,f:22,k:560,
+       d:"Omega-3s — sets up Saturday Full Body.",
+       ing:["200g salmon","200g sweet potato","Zucchini","Olive oil + lemon"]},
+      {t:"10:00 PM", n:"Pre-Sleep Casein Bowl", p:43,c:25,f:2,k:290,
+       d:"Tomorrow is Full Body — sleep matters.",
+       ing:["300g Fage","½ scoop Ascent","Honey","Mag 300mg"]}
+    ],
+    workout: {
+      title: "Cardio + Core",
+      sub: "Active recovery. Blood flow = recovery.",
+      duration: "~45 min",
+      exercises: [
+        {n:"Zone 2: incline walk or cycling",r:"25 min @ conversational pace"},
+        {n:"McGill Big 3: curl-up",r:"5 reps, 10 sec hold"},
+        {n:"McGill Big 3: side plank",r:"3 × 15 sec/side"},
+        {n:"McGill Big 3: bird dog",r:"1 × 10/side"},
+        {n:"Dead bug",r:"3 × 8/side"},
+        {n:"Pallof press",r:"3 × 8/side"},
+        {n:"Reverse crunch",r:"3 × 10"},
+        {n:"Mobility cool-down",r:"8 min"}
+      ]
+    },
+    alt: {
+      hectic: "Just do the 25-min Zone 2. Skip the core circuit. You'll live.",
+      injured: "Rest. If it's just a minor thing, light bike might help blood flow — don't push."
+    }
+  },
+  6: { // Saturday
+    name: "Saturday",
+    type: "Full Body",
+    tag: "Full Body · Gym 8:00 AM",
+    kcal: 3318,
+    kcalLabel: "3,318 kcal",
+    gym: "8:00 AM",
+    meals: [
+      {t:"7:15 AM", n:"Turkey & Egg Scramble + Oats", p:65,c:74,f:34,k:867,
+       d:"45-min window before gym. Cook properly.",
+       ing:["4 large eggs","100g ground turkey","Spinach","Salsa","60g oats on side","1 banana"]},
+      {t:"9:45 AM", n:"Chicken & Rice Power Bowl", p:59,c:92,f:26,k:855, batch:true,
+       d:"Full Body = max glycogen depletion. Creatine 5g.",
+       ing:["150g batch chicken","300g white rice","90g broccoli","Olive oil + soy"]},
+      {t:"1:00 PM", n:"Chicken Souvlaki Rice Bowl", p:57,c:58,f:18,k:610, batch:true,
+       d:"Relaxed Saturday lunch.",
+       ing:["130g batch chicken","Brown rice","Tzatziki","Cucumber + bell pepper"]},
+      {t:"8:00 PM", n:"Turkey & Veggie Stir-Fry", p:56,c:55,f:14,k:560,
+       d:"Fresh cook — variety after batch meals all week.",
+       ing:["200g ground turkey","Bell pepper + zucchini","250g rice","Soy + sesame"]},
+      {t:"10:00 PM", n:"Pre-Sleep Casein Bowl", p:48,c:28,f:2,k:320,
+       d:"Tomorrow is meal prep — sleep well.",
+       ing:["350g Fage","½ scoop Ascent","Honey","½ banana","Mag 300mg"]}
+    ],
+    workout: {
+      title: "Full Body",
+      sub: "Moderate load, all muscle groups",
+      duration: "~60–70 min",
+      exercises: [
+        {n:"Trap bar deadlift (or sumo DL)",r:"3 × 6–8 · RIR 3"},
+        {n:"Incline barbell bench",r:"3 × 8–10"},
+        {n:"Cable row (wide grip)",r:"3 × 10–12"},
+        {n:"Seated DB overhead press",r:"3 × 10–12"},
+        {n:"Leg press",r:"3 × 12–15"},
+        {n:"Dumbbell RDL",r:"2 × 12–15"},
+        {n:"Standing calf raise",r:"3 × 12–15"},
+        {n:"EZ-bar curl + tricep pushdown",r:"2 sets each"}
+      ]
+    },
+    alt: {
+      hectic: "Shortened Full Body: <strong>trap bar 3×6</strong>, <strong>incline bench 2×8</strong>, <strong>cable row 2×10</strong>. Done in 25 min.",
+      injured: "Rest. Saturday walk outside if tolerable — weekend light."
+    }
+  }
+};
+
+const GROCERY_FULL = {
+  WinCo: {
+    sub: "Bulk bin staples — best prices",
+    items: [
+      {n:"White rice (bulk)", m:"4 lbs", p:"~$3.50"},
+      {n:"Brown rice (bulk)", m:"1 lb", p:"~$1.00"},
+      {n:"Rolled oats (bulk)", m:"1 lb", p:"~$0.90"},
+      {n:"Green/brown lentils", m:"1.5 lbs dry", p:"~$2.20"},
+      {n:"Black beans (canned)", m:"3 × 15oz", p:"~$3.00"},
+      {n:"Diced tomatoes (canned)", m:"1 × 28oz", p:"~$1.50"},
+      {n:"Beef broth (low sodium)", m:"1 quart", p:"~$2.50"},
+      {n:"Chia seeds (bulk)", m:"4 oz", p:"~$1.80"},
+      {n:"Eggs (large)", m:"2 × 18 ct", p:"~$9.00"},
+      {n:"Bananas", m:"9 count", p:"~$2.70"},
+      {n:"Medjool dates", m:"2 lb bag", p:"~$9.00"},
+      {n:"Sweet potato", m:"3 medium", p:"~$3.00"},
+      {n:"Honey", m:"1 × 12oz", p:"~$3.50"}
+    ]
+  },
+  Costco: {
+    sub: "Proteins, yogurt, frozen — bulk value",
+    items: [
+      {n:"Chicken breast (boneless)", m:"~4 lbs fresh", p:"~$18"},
+      {n:"Fage 0% Greek yogurt", m:"3 × 48oz tubs", p:"~$18"},
+      {n:"Ascent whey (vanilla)", m:"1 tub (monthly)", p:"~$45"},
+      {n:"Frozen mango", m:"1 × 4 lb bag (monthly)", p:"~$11"},
+      {n:"Frozen berries", m:"1 × 3 lb bag", p:"~$12"},
+      {n:"Broccoli florets", m:"1 × 2 lb bag", p:"~$5"},
+      {n:"Olive oil (extra virgin)", m:"1 L (monthly)", p:"~$14"}
+    ]
+  },
+  "Trader Joe's": {
+    sub: "Fresh protein + produce",
+    items: [
+      {n:"Ground turkey 93/7", m:"3 lbs", p:"~$12"},
+      {n:"Salmon fillets", m:"400g (2 portions)", p:"~$12"},
+      {n:"Avocados (Hass)", m:"5 count", p:"~$5"},
+      {n:"Cucumber (English)", m:"2 count", p:"~$3"},
+      {n:"Bell peppers", m:"3 count", p:"~$4"},
+      {n:"Zucchini", m:"3 count", p:"~$3"},
+      {n:"Spinach", m:"1 bag", p:"~$3"},
+      {n:"Tzatziki", m:"1 tub", p:"~$4"},
+      {n:"Whole wheat pasta", m:"1 box", p:"~$2"},
+      {n:"Corn tortillas", m:"1 pack", p:"~$2"}
+    ]
+  }
+};
+
+const GROCERY_HALF = {
+  WinCo: {
+    sub: "Minimum viable shopping",
+    items: [
+      {n:"White rice (bulk)", m:"2 lbs", p:"~$2"},
+      {n:"Rolled oats (bulk)", m:"1 lb", p:"~$0.90"},
+      {n:"Black beans (canned)", m:"2 × 15oz", p:"~$2"},
+      {n:"Eggs (large)", m:"1 × 18 ct", p:"~$4.50"},
+      {n:"Bananas", m:"6 count", p:"~$1.80"}
+    ]
+  },
+  Costco: {
+    sub: "Just the essentials",
+    items: [
+      {n:"Chicken breast", m:"2 lbs", p:"~$9"},
+      {n:"Fage 0% yogurt", m:"1 × 48oz", p:"~$6"},
+      {n:"Frozen berries", m:"1 × 3 lb bag", p:"~$12"}
+    ]
+  },
+  "Trader Joe's": {
+    sub: "Small fresh shop",
+    items: [
+      {n:"Ground turkey 93/7", m:"1 lb", p:"~$5"},
+      {n:"Avocados", m:"3 count", p:"~$3"},
+      {n:"Spinach", m:"1 bag", p:"~$3"},
+      {n:"Bell peppers", m:"2 count", p:"~$3"}
+    ]
+  }
+};
+
+/* ═══════════════════════════════════════════════════════
+   STATE — persisted to localStorage
+═══════════════════════════════════════════════════════ */
+
+const DEFAULT_START = (() => {
+  // Find the most recent Sunday as default start
+  const today = new Date();
+  const day = today.getDay();
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - day);
+  return sunday.toISOString().split('T')[0];
+})();
+
+const state = {
+  startDate: localStorage.getItem('rc_start') || DEFAULT_START,
+  days: JSON.parse(localStorage.getItem('rc_days') || '{}'), // {'2026-04-19': {mode:'normal', checks:{}, exercises:{}, meals:{}}}
+  grocery: JSON.parse(localStorage.getItem('rc_grocery') || '{}'),
+  groceryMode: localStorage.getItem('rc_groc_mode') || 'full',
+  comingBack: JSON.parse(localStorage.getItem('rc_cb') || 'null')  // {startedDate, sessionsLeft}
+};
+
+if (!localStorage.getItem('rc_start')) localStorage.setItem('rc_start', state.startDate);
+
+function save() {
+  localStorage.setItem('rc_days', JSON.stringify(state.days));
+  localStorage.setItem('rc_grocery', JSON.stringify(state.grocery));
+  localStorage.setItem('rc_groc_mode', state.groceryMode);
+  localStorage.setItem('rc_start', state.startDate);
+  localStorage.setItem('rc_cb', JSON.stringify(state.comingBack));
+}
+
+function todayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function dayKey(date) {
+  return date.toISOString().split('T')[0];
+}
+
+function getDay(dateKey) {
+  if (!state.days[dateKey]) {
+    state.days[dateKey] = { mode: 'normal', checks: {}, exercises: {}, meals: {} };
+  }
+  return state.days[dateKey];
+}
+
+function weekNumber() {
+  const start = new Date(state.startDate);
+  const now = new Date();
+  const diff = Math.floor((now - start) / (1000*60*60*24));
+  return Math.floor(diff / 7) + 1;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════ */
+
+const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function renderToday() {
+  const now = new Date();
+  const dow = now.getDay();
+  const plan = PLAN[dow];
+  const dayState = getDay(todayKey());
+  const mode = dayState.mode;
+
+  // Header
+  document.getElementById('h-week').textContent = `Week ${weekNumber()}`;
+  document.getElementById('hero-day').textContent = plan.name;
+  document.getElementById('hero-kcal').textContent = plan.kcalLabel;
+
+  // Hero type with mode tag
+  let typeHtml = plan.tag;
+  if (mode === 'hectic') typeHtml += '<span class="mode-tag hectic">Hectic</span>';
+  if (mode === 'injured') typeHtml += '<span class="mode-tag injured">Injured</span>';
+  document.getElementById('hero-type').innerHTML = typeHtml;
+
+  // Mode buttons
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+
+  // Quick checks
+  document.querySelectorAll('.q-check').forEach(c => {
+    c.classList.toggle('checked', !!dayState.checks[c.dataset.check]);
+  });
+
+  // Coming back banner
+  const cbContainer = document.getElementById('cb-container');
+  if (state.comingBack && state.comingBack.sessionsLeft > 0) {
+    cbContainer.innerHTML = `
+      <div class="cb-active">
+        <div class="cb-h">Coming back — session ${4 - state.comingBack.sessionsLeft} of 3</div>
+        <div class="cb-t">Reduce sets by one per exercise and drop RIR to 4 today. This ramp prevents injury. ${state.comingBack.sessionsLeft} reduced session${state.comingBack.sessionsLeft===1?'':'s'} left.</div>
+      </div>`;
+  } else {
+    cbContainer.innerHTML = '';
+  }
+
+  // Week strip
+  renderWeekStrip();
+
+  // Meals
+  renderMeals(plan, dayState);
+
+  // Workout
+  renderWorkout(plan, dayState, mode);
+
+  // Tomorrow
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const tomPlan = PLAN[tomorrow.getDay()];
+  document.getElementById('tom-title').textContent = `${tomPlan.name} · ${tomPlan.tag}`;
+  document.getElementById('tom-prep').textContent = getTomorrowPrep(tomorrow.getDay());
+}
+
+function getTomorrowPrep(dow) {
+  const prepMap = {
+    0: "Rest + meal prep day — 2:00 PM batch cook block.",
+    1: "Tonight: pre-mix yogurt bowl (90 sec). Morning is tight.",
+    2: "Pull day — overnight oats already in fridge from Sunday prep.",
+    3: "Tonight: pre-mix yogurt bowl. Tight morning window.",
+    4: "Rest day — no pre-prep needed. Sleep in a bit.",
+    5: "Tonight: pre-mix yogurt bowl. Cardio day is still tight.",
+    6: "Full Body — 45-min morning window. No pre-prep but plan the scramble."
+  };
+  return prepMap[dow] || "—";
+}
+
+function renderWeekStrip() {
+  const strip = document.getElementById('week-strip');
+  const now = new Date();
+  const dow = now.getDay();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - dow);
+
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = dayKey(d);
+    const dayData = state.days[key];
+    let dotClass = '';
+    if (key === todayKey()) dotClass = 'today';
+    else if (dayData) {
+      if (dayData.checks.workout && dayData.checks.meals) dotClass = 'done';
+      else if (dayData.mode === 'hectic' && (dayData.checks.workout || dayData.checks.meals)) dotClass = 'hectic';
+      else if (dayData.mode === 'injured') dotClass = 'hectic';
+      else if (d < now && Object.keys(dayData.checks).length === 0) dotClass = 'missed';
+    } else if (d < now) {
+      dotClass = 'missed';
+    }
+    html += `<div class="w-day">
+      <div class="w-dow">${DOW_SHORT[i]}</div>
+      <div class="w-dot ${dotClass}"></div>
+    </div>`;
+  }
+  strip.innerHTML = html;
+}
+
+function renderMeals(plan, dayState) {
+  const list = document.getElementById('meals-list');
+  const sub = document.getElementById('meals-sub');
+
+  // Sum macros
+  let tP = 0, tC = 0, tF = 0, tK = 0;
+  plan.meals.forEach(m => { tP += m.p; tC += m.c; tF += m.f; tK += m.k; });
+  sub.textContent = `${plan.meals.length} meals · ${tP}P / ${tC}C / ${tF}F · ${tK.toLocaleString()} kcal`;
+
+  let html = '';
+  plan.meals.forEach((m, i) => {
+    const checked = !!dayState.meals[i];
+    const open = dayState.meals['open_'+i];
+    const pills = [];
+    if (m.batch) pills.push('<span class="pill batch">Batch</span>');
+    if (m.tight) pills.push('<span class="pill tight">Tight</span>');
+
+    html += `<div class="meal ${checked?'checked':''} ${open?'open':''}" data-idx="${i}">
+      <div class="meal-head">
+        <div class="meal-check" data-action="check"></div>
+        <div class="meal-info" data-action="expand">
+          <div class="meal-time">${m.t} ${pills.join(' ')}</div>
+          <div class="meal-name">${m.n}</div>
+        </div>
+        <div class="meal-macros"><span>${m.p}p</span><span>${m.k}k</span></div>
+        <div class="meal-expand" data-action="expand">▾</div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-desc">${m.d}</div>
+        <ul class="ing-list">${m.ing.map(x => `<li>${x}</li>`).join('')}</ul>
+        <div class="macro-bar">
+          <div class="mb-cell"><div class="mb-v">${m.p}g</div><div class="mb-l">Protein</div></div>
+          <div class="mb-cell"><div class="mb-v">${m.c}g</div><div class="mb-l">Carbs</div></div>
+          <div class="mb-cell"><div class="mb-v">${m.f}g</div><div class="mb-l">Fat</div></div>
+          <div class="mb-cell"><div class="mb-v">${m.k}</div><div class="mb-l">kcal</div></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+function renderWorkout(plan, dayState, mode) {
+  const area = document.getElementById('workout-area');
+  const sub = document.getElementById('wo-sub');
+  const wo = plan.workout;
+  sub.textContent = wo.duration;
+
+  let html = `<div class="workout-hero">
+    <div class="wo-title">${wo.title}</div>
+    <div class="wo-sub">${wo.sub}</div>
+    <div class="wo-meta">
+      <div><span>Duration</span><strong>${wo.duration}</strong></div>
+      ${plan.gym ? `<div><span>Start</span><strong>${plan.gym}</strong></div>` : ''}
+    </div>
+  </div>`;
+
+  // Alternative if in hectic/injured mode
+  if (mode !== 'normal' && plan.alt) {
+    const altKey = mode === 'hectic' ? 'hectic' : 'injured';
+    const altText = plan.alt[altKey];
+    if (altText) {
+      html += `<div class="alt-callout ${mode==='injured'?'injured':''}">
+        <div class="alt-h">${mode === 'hectic' ? 'Hectic — minimum effective dose' : 'Injured / sick — recovery mode'}</div>
+        <div class="alt-text">${altText}</div>
+      </div>`;
+    }
+  }
+
+  // Exercises
+  if (mode !== 'injured' || !plan.alt) {
+    wo.exercises.forEach((ex, i) => {
+      const done = !!dayState.exercises[i];
+      html += `<div class="ex ${done?'done':''}" data-ex-idx="${i}">
+        <div class="ex-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.n}</div>
+          ${ex.r ? `<div class="ex-prescribe">${ex.r}</div>` : ''}
+          ${ex.note ? `<div class="ex-note">${ex.note}</div>` : ''}
+        </div>
+        <div class="ex-check"></div>
+      </div>`;
+    });
+  }
+
+  area.innerHTML = html;
+}
+
+function renderWeek() {
+  const container = document.getElementById('week-cards');
+  document.getElementById('week-label').textContent = `Week ${weekNumber()}`;
+
+  const now = new Date();
+  const dow = now.getDay();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - dow);
+
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = dayKey(d);
+    const plan = PLAN[i];
+    const dayData = state.days[key];
+    const isToday = key === todayKey();
+    let dotClass = 'today-empty';
+    if (isToday) dotClass = 'today';
+    else if (dayData) {
+      if (dayData.checks.workout && dayData.checks.meals) dotClass = 'done';
+      else if (dayData.mode === 'hectic') dotClass = 'hectic';
+      else if (dayData.mode === 'injured') dotClass = 'hectic';
+      else if (d < now && Object.keys(dayData.checks).length === 0) dotClass = 'missed';
+    } else if (d < now) {
+      dotClass = 'missed';
+    }
+
+    html += `<div class="w-day-card ${isToday?'is-today':''}">
+      <div class="wd-dot ${dotClass}"></div>
+      <div class="wd-info">
+        <div class="wd-dow">${DOW_SHORT[i]} · ${d.getDate()}</div>
+        <div class="wd-type">${plan.type}</div>
+      </div>
+      <div class="wd-kcal">${plan.kcalLabel.split(' ')[0]}</div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function renderGrocery() {
+  const listEl = document.getElementById('grocery-list');
+  const data = state.groceryMode === 'full' ? GROCERY_FULL : GROCERY_HALF;
+  const intro = document.getElementById('groc-intro');
+  intro.textContent = state.groceryMode === 'full'
+    ? "WinCo → Costco → Trader Joe's. ~60–75 min total."
+    : "Reduced shop for uncertain weeks. Covers ~3–4 days of the plan.";
+
+  let html = '';
+  let total = 0;
+  Object.entries(data).forEach(([storeName, store]) => {
+    html += `<div class="store"><div class="store-h">${storeName}</div><div class="store-sub">${store.sub}</div>`;
+    store.items.forEach((item, i) => {
+      const key = `${state.groceryMode}_${storeName}_${i}`;
+      const checked = !!state.grocery[key];
+      // Extract number from price string like "~$3.50"
+      const priceMatch = item.p.match(/\$?([\d.]+)/);
+      if (priceMatch) total += parseFloat(priceMatch[1]);
+      html += `<div class="groc-item ${checked?'checked':''}" data-groc-key="${key}">
+        <div class="g-check"></div>
+        <div class="g-body">
+          <div class="g-name">${item.n}</div>
+          <div class="g-meta">${item.m}</div>
+        </div>
+        <div class="g-price">${item.p}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  listEl.innerHTML = html;
+
+  document.getElementById('groc-total').textContent = state.groceryMode === 'full'
+    ? `Total ~$128–158`
+    : `Total ~$52–68`;
+}
+
+function renderSettings() {
+  const d = new Date(state.startDate);
+  document.getElementById('start-date-display').textContent =
+    d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+  document.getElementById('current-week-display').textContent = `Week ${weekNumber()}`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   INTERACTIONS
+═══════════════════════════════════════════════════════ */
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+    if (t.dataset.tab === 'week') renderWeek();
+    if (t.dataset.tab === 'grocery') renderGrocery();
+    if (t.dataset.tab === 'settings') renderSettings();
+    window.scrollTo(0, 0);
+  });
+});
+
+// Mode strip
+document.getElementById('mode-strip').addEventListener('click', (e) => {
+  const btn = e.target.closest('.mode-btn');
+  if (!btn) return;
+  const dayState = getDay(todayKey());
+  dayState.mode = btn.dataset.mode;
+  save();
+  renderToday();
+});
+
+// Quick checks
+document.querySelectorAll('.q-check').forEach(c => {
+  c.addEventListener('click', () => {
+    const dayState = getDay(todayKey());
+    const key = c.dataset.check;
+    dayState.checks[key] = !dayState.checks[key];
+    save();
+    renderToday();
+  });
+});
+
+// Meal clicks (delegated)
+document.getElementById('meals-list').addEventListener('click', (e) => {
+  const meal = e.target.closest('.meal');
+  if (!meal) return;
+  const action = e.target.closest('[data-action]')?.dataset.action;
+  const idx = meal.dataset.idx;
+  const dayState = getDay(todayKey());
+
+  if (action === 'check') {
+    dayState.meals[idx] = !dayState.meals[idx];
+    save();
+    renderToday();
+  } else if (action === 'expand') {
+    dayState.meals['open_'+idx] = !dayState.meals['open_'+idx];
+    save();
+    renderToday();
+  }
+});
+
+// Exercise clicks
+document.getElementById('workout-area').addEventListener('click', (e) => {
+  const ex = e.target.closest('.ex');
+  if (!ex) return;
+  const idx = ex.dataset.exIdx;
+  const dayState = getDay(todayKey());
+  dayState.exercises[idx] = !dayState.exercises[idx];
+  save();
+  // If we just completed a coming-back session
+  if (state.comingBack && dayState.exercises[idx]) {
+    // Don't decrement on every exercise — only when workout is marked done
+  }
+  renderToday();
+});
+
+// Workout completion triggers coming-back decrement
+document.querySelector('.q-check[data-check="workout"]').addEventListener('click', () => {
+  if (state.comingBack && state.comingBack.sessionsLeft > 0) {
+    const dayState = getDay(todayKey());
+    if (dayState.checks.workout) {
+      state.comingBack.sessionsLeft--;
+      if (state.comingBack.sessionsLeft <= 0) {
+        state.comingBack = null;
+      }
+      save();
+      renderToday();
+    }
+  }
+});
+
+// Grocery mode toggle
+document.querySelector('.groc-toggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  document.querySelectorAll('.groc-toggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.groceryMode = btn.dataset.list;
+  save();
+  renderGrocery();
+});
+
+// Grocery items
+document.getElementById('grocery-list').addEventListener('click', (e) => {
+  const item = e.target.closest('.groc-item');
+  if (!item) return;
+  const key = item.dataset.grocKey;
+  state.grocery[key] = !state.grocery[key];
+  save();
+  renderGrocery();
+});
+
+// Coming back button
+document.getElementById('cb-btn').addEventListener('click', () => {
+  state.comingBack = { startedDate: todayKey(), sessionsLeft: 3 };
+  save();
+  alert("Coming back mode activated. Your next 3 sessions will run at reduced volume (one less set per exercise, RIR 4). Complete a session by checking 'Workout done' in Today.");
+  // Switch to today tab
+  document.querySelector('.tab[data-tab="today"]').click();
+});
+
+// Settings actions
+function setStartDate() {
+  const current = state.startDate;
+  const input = prompt("Program start date (YYYY-MM-DD). This should be the Sunday you began or plan to begin:", current);
+  if (input && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    state.startDate = input;
+    save();
+    renderSettings();
+    renderToday();
+  } else if (input !== null) {
+    alert("Use format YYYY-MM-DD (e.g., 2026-04-19).");
+  }
+}
+
+function resetToday() {
+  if (!confirm("Uncheck all of today's items? This can't be undone.")) return;
+  state.days[todayKey()] = { mode: 'normal', checks: {}, exercises: {}, meals: {} };
+  save();
+  renderToday();
+}
+
+function resetAll() {
+  if (!confirm("Clear all progress, including week history and coming-back mode? Your start date will also reset.")) return;
+  localStorage.clear();
+  location.reload();
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+
+// Show install banner on first load
+if (!localStorage.getItem('rc_seen_install')) {
+  document.getElementById('install-banner').classList.add('show');
+  localStorage.setItem('rc_seen_install', '1');
+}
+
+renderToday();
+</script>
+
+</body>
+</html>
