@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>Calisthenics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface-2: #242424;
+  --surface-3: #2e2e2e;
+  --border: rgba(255,255,255,0.08);
+  --border-2: rgba(255,255,255,0.14);
+  --text: #f5f5f0;
+  --muted: #8a8a82;
+  --dim: #5a5a55;
+  --accent: #c9a961;
+  --accent-2: #e8d4a0;
+  --green: #7fa650;
+  --amber: #d99850;
+  --red: #c26a5a;
+  --blue: #6f8fb0;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overscroll-behavior-y: contain;
+}
+
+body {
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* HEADER */
+header {
+  padding: 1.25rem 1.25rem 0.75rem;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+}
+.h-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+.h-title {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.h-title em { color: var(--accent); }
+.h-back {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+.h-back:hover { color: var(--accent); }
+
+/* TAB BAR */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin: 0 -1.25rem -0.75rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 0.7rem 0;
+  margin-right: 1.5rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-family: var(--sans);
+  transition: color 0.15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* SECTIONS */
+main { padding: 1rem 1.25rem 3rem; }
+.section { display: none; animation: fadeIn 0.2s; }
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* MODE STRIP */
+.mode-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 1rem;
+}
+.mode-btn {
+  padding: 0.55rem 0.4rem;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.mode-btn.active[data-mode="home"]  { background: var(--accent); color: #1a1a1a; }
+.mode-btn.active[data-mode="away"]  { background: var(--amber); color: #1a1a1a; }
+.mode-btn.active[data-mode="rest"]  { background: var(--blue); color: #f5f5f0; }
+
+/* SESSION STATUS CARD */
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s;
+}
+.status-card.both-done { border-color: rgba(127,166,80,0.45); background: rgba(127,166,80,0.05); }
+.status-card.one-done  { border-color: rgba(217,152,80,0.45); background: rgba(217,152,80,0.04); }
+.status-label {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 0.6rem;
+}
+.session-checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.sess-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.65rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+.sess-check.done {
+  background: rgba(127,166,80,0.1);
+  border-color: rgba(127,166,80,0.35);
+}
+.sess-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.sess-check.done .sess-dot {
+  background: var(--green);
+  border-color: var(--green);
+}
+.sess-dot::after {
+  content: "";
+  width: 7px; height: 4px;
+  border-left: 2px solid #1a1a1a;
+  border-bottom: 2px solid #1a1a1a;
+  transform: rotate(-45deg) translate(1px,-1px);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.sess-check.done .sess-dot::after { opacity: 1; }
+.sess-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+.sess-check.done .sess-label { color: var(--muted); }
+.sess-time {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  margin-top: 1px;
+}
+.day-status-bar {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.day-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.day-dot.green { background: var(--green); box-shadow: 0 0 0 3px rgba(127,166,80,0.2); }
+.day-dot.amber { background: var(--amber); box-shadow: 0 0 0 3px rgba(217,152,80,0.2); }
+.day-dot.red   { background: var(--red);   box-shadow: 0 0 0 3px rgba(194,106,90,0.2); }
+.day-status-text {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* SECTION HEADERS */
+.sec-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 1.5rem 0 0.6rem;
+}
+.sec-h h2 {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.sec-h .sec-sub {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* EXERCISE CARDS */
+.ex-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.ex-card.open { border-color: var(--border-2); }
+.ex-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+.ex-num {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--dim);
+  width: 18px;
+  flex-shrink: 0;
+}
+.ex-info { flex: 1; min-width: 0; }
+.ex-name { font-size: 0.88rem; font-weight: 500; line-height: 1.3; }
+.ex-prescribe {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--accent-2);
+  margin-top: 2px;
+}
+.ex-tags { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.tag {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--dim);
+}
+.tag.planche { background: rgba(127,100,200,0.15); color: #a090d8; }
+.tag.fl      { background: rgba(127,166,80,0.15); color: var(--green); }
+.tag.mu      { background: rgba(201,169,97,0.15); color: var(--accent); }
+.tag.lsit    { background: rgba(194,106,90,0.15); color: var(--red); }
+.tag.grip    { background: rgba(90,90,85,0.4); color: var(--muted); }
+.tag.hs      { background: rgba(111,143,176,0.2); color: var(--blue); }
+.tag.core    { background: rgba(194,90,90,0.15); color: #d08080; }
+.ex-chevron {
+  color: var(--dim);
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.ex-card.open .ex-chevron { transform: rotate(180deg); }
+
+.ex-body {
+  display: none;
+  padding: 0 0.9rem 0.9rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.8rem;
+  margin-top: 0;
+}
+.ex-card.open .ex-body { display: block; }
+
+.feet-pill {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+.feet-on  { background: rgba(127,166,80,0.15); color: var(--green); }
+.feet-off { background: rgba(194,106,90,0.15); color: var(--red); }
+
+.ex-cue {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 0.75rem;
+}
+.ex-cue strong { color: var(--accent-2); font-weight: 500; }
+
+.prog-steps { display: flex; flex-direction: column; gap: 3px; }
+.prog-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+.prog-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.78rem;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+.prog-row.cur {
+  background: rgba(201,169,97,0.08);
+  border: 1px solid rgba(201,169,97,0.2);
+}
+.prog-n {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--dim);
+  min-width: 14px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.prog-row.cur .prog-n { color: var(--accent); }
+.prog-t { color: var(--muted); line-height: 1.4; }
+.prog-t strong { color: var(--text); font-weight: 500; }
+.prog-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 4px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* AWAY MODE CALLOUT */
+.mode-callout {
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.mode-callout.away {
+  background: rgba(217,152,80,0.07);
+  border: 1px solid rgba(217,152,80,0.2);
+}
+.mode-callout.rest {
+  background: rgba(111,143,176,0.07);
+  border: 1px solid rgba(111,143,176,0.2);
+}
+.mc-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+}
+.away .mc-label { color: var(--amber); }
+.rest .mc-label { color: var(--blue); }
+.mc-text { color: var(--muted); }
+.mc-text strong { color: var(--text); font-weight: 500; }
+
+/* WEEK STRIP */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 1.25rem;
+  padding: 0.7rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.w-day { text-align: center; }
+.w-dow {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.w-dot {
+  width: 100%; height: 6px;
+  background: var(--surface-3);
+  border-radius: 3px;
+  transition: background 0.3s;
+}
+.w-dot.green  { background: var(--green); }
+.w-dot.amber  { background: var(--amber); }
+.w-dot.red    { background: var(--red); }
+.w-dot.today  { background: var(--accent); }
+
+/* SKILL PATHS */
+.path-section { margin-bottom: 1.5rem; }
+.path-title {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-style: italic;
+  font-weight: 400;
+  margin-bottom: 0.2rem;
+}
+.path-eta {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.65rem;
+}
+.path-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.path-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.path-step.here {
+  background: rgba(201,169,97,0.06);
+  border-color: rgba(201,169,97,0.3);
+}
+.path-step.done-step {
+  opacity: 0.45;
+}
+.ps-indicator {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.path-step.here .ps-indicator {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(201,169,97,0.2);
+}
+.path-step.done-step .ps-indicator { background: var(--green); }
+.ps-info { flex: 1; }
+.ps-label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 1px;
+}
+.path-step.here .ps-label { color: var(--accent); }
+.ps-name { font-size: 0.88rem; font-weight: 500; line-height: 1.3; }
+.ps-note { font-size: 0.76rem; color: var(--muted); margin-top: 2px; font-style: italic; }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* WARMUP GROUP */
+.warmup-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.warmup-group-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 0.45rem 0.9rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.warmup-group .ex-card {
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  margin-bottom: 0;
+}
+.warmup-group .ex-card:last-child {
+  border-bottom: none;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-top">
+    <div class="h-title">Calis<em>thenics</em></div>
+    <a href="https://finneurobot.github.io/Today/" class="h-back">← Today</a>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="routine">Routine</button>
+    <button class="tab" data-tab="paths">Skill paths</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ROUTINE TAB -->
+<div id="tab-routine" class="section active">
+
+  <!-- Mode strip -->
+  <div class="mode-strip" id="mode-strip">
+    <button class="mode-btn active" data-mode="home">Home</button>
+    <button class="mode-btn" data-mode="away">Away</button>
+    <button class="mode-btn" data-mode="rest">Rest</button>
+  </div>
+
+  <!-- Session status -->
+  <div class="status-card" id="status-card">
+    <div class="status-label">Today's sessions</div>
+    <div class="session-checks">
+      <div class="sess-check" id="sess-morning" data-sess="morning">
+        <div class="sess-dot"></div>
+        <div>
+          <div class="sess-label">Morning</div>
+          <div class="sess-time">~5 min</div>
+        </div>
+      </div>
+      <div class="sess-check" id="sess-evening" data-sess="evening">
+        <div class="sess-dot"></div>
+        <div>
+          <div class="sess-label">Evening</div>
+          <div class="sess-time">~8–10 min</div>
+        </div>
+      </div>
+    </div>
+    <div class="day-status-bar">
+      <div class="day-dot" id="day-dot"></div>
+      <div class="day-status-text" id="day-status-text">Neither session logged yet</div>
+    </div>
+  </div>
+
+  <!-- Week strip -->
+  <div class="week-strip" id="week-strip"></div>
+
+  <!-- Away callout (hidden by default) -->
+  <div class="mode-callout away" id="away-callout" style="display:none">
+    <div class="mc-label">Away mode</div>
+    <div class="mc-text"><strong>No bar or parallettes needed.</strong> Push, core, and planche work all survive. You'll lose the pulling and hanging work — one or two nights won't set you back.</div>
+  </div>
+
+  <!-- Rest callout (hidden by default) -->
+  <div class="mode-callout rest" id="rest-callout" style="display:none">
+    <div class="mc-label">Rest day</div>
+    <div class="mc-text"><strong>Active recovery only.</strong> Wrist prep and hollow body holds. Keep the habit alive without loading the tissue.</div>
+  </div>
+
+  <!-- MORNING SESSION -->
+  <div id="morning-section">
+    <div class="sec-h">
+      <h2>Morning</h2>
+      <span class="sec-sub">Skill work · ~5 min</span>
+    </div>
+    <div id="morning-exercises"></div>
+  </div>
+
+  <!-- EVENING SESSION -->
+  <div id="evening-section">
+    <div class="sec-h">
+      <h2>Evening</h2>
+      <span class="sec-sub">Strength volume · ~8–10 min</span>
+    </div>
+    <div id="evening-exercises"></div>
+  </div>
+
+</div>
+
+<!-- SKILL PATHS TAB -->
+<div id="tab-paths" class="section">
+
+  <div class="sec-h" style="margin-top:0.5rem">
+    <h2>Skill paths</h2>
+  </div>
+
+  <div class="path-section">
+    <div class="path-title">L-sit</div>
+    <div class="path-eta">Fastest win · 3–6 weeks</div>
+    <div class="path-steps">
+      <div class="path-step here">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">You are here</div>
+          <div class="ps-name">Tuck hold</div>
+          <div class="ps-note">One or both knees bent, feet off ground on parallettes</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Next</div>
+          <div class="ps-name">One leg extended</div>
+          <div class="ps-note">Alternate which leg is straight, hold for time</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Goal</div>
+          <div class="ps-name">Full L-sit</div>
+          <div class="ps-note">Both legs parallel to ground, 10+ seconds</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="path-section">
+    <div class="path-title">Muscle-up</div>
+    <div class="path-eta">Close · 4–8 weeks</div>
+    <div class="path-steps">
+      <div class="path-step here">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">You are here</div>
+          <div class="ps-name">Archer pull-ups + negatives</div>
+          <div class="ps-note">Unilateral pulling strength + transition control</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Next</div>
+          <div class="ps-name">Chest-to-bar pull-ups</div>
+          <div class="ps-note">Sternum touching bar on every rep</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Then</div>
+          <div class="ps-name">False grip hang + row</div>
+          <div class="ps-note">Wrist over bar — the transition shortcut</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Goal</div>
+          <div class="ps-name">Full muscle-up</div>
+          <div class="ps-note">Clean, controlled, no kip</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="path-section">
+    <div class="path-title">Front lever</div>
+    <div class="path-eta">Medium burn · 3–6 months</div>
+    <div class="path-steps">
+      <div class="path-step here">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">You are here</div>
+          <div class="ps-name">Tuck hold</div>
+          <div class="ps-note">Knees drawn in, body horizontal, arms straight — static hold only</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Next</div>
+          <div class="ps-name">Tuck rows</div>
+          <div class="ps-note">Pull up and down from the tuck hold position</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Then</div>
+          <div class="ps-name">Straddle hold</div>
+          <div class="ps-note">Legs split wide, body horizontal</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Goal</div>
+          <div class="ps-name">Full front lever</div>
+          <div class="ps-note">Straight body, 5+ second hold</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="path-section">
+    <div class="path-title">Planche</div>
+    <div class="path-eta">Long game · 1–3 years</div>
+    <div class="path-steps">
+      <div class="path-step here">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">You are here</div>
+          <div class="ps-name">Planche lean</div>
+          <div class="ps-note">Feet on ground, shoulders leaned past hands</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">~Weeks</div>
+          <div class="ps-name">Tuck negatives</div>
+          <div class="ps-note">Jump up, both feet off, lower slowly over 3–4 seconds</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">~Months</div>
+          <div class="ps-name">Tuck planche hold</div>
+          <div class="ps-note">Both feet off, knees to chest, static 3–5s</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">~Months+</div>
+          <div class="ps-name">Advanced tuck</div>
+          <div class="ps-note">One leg extending back, body flatter</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">~Years</div>
+          <div class="ps-name">Straddle planche</div>
+          <div class="ps-note">Both legs extended wide, body horizontal</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Goal</div>
+          <div class="ps-name">Full planche</div>
+          <div class="ps-note">Both legs straight, body fully horizontal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="path-section">
+    <div class="path-title">Handstand</div>
+    <div class="path-eta">Post-boot · 2–6 months</div>
+    <div class="path-steps">
+      <div class="path-step here">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Now (boot on)</div>
+          <div class="ps-name">Wall hold, chest to wall</div>
+          <div class="ps-note">Healthy leg kick-up, 20–30s holds. Builds shoulder stacking.</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Post-boot</div>
+          <div class="ps-name">Kick-up practice</div>
+          <div class="ps-note">Controlled entry and exit, both legs</div>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-indicator"></div>
+        <div class="ps-info">
+          <div class="ps-label">Goal</div>
+          <div class="ps-name">Freestanding handstand</div>
+          <div class="ps-note">10+ second hold, no wall</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+/* ─── DATA ─── */
+
+const EXERCISES = {
+  morning: {
+    home: [
+      {
+        id: 'wrist-circles',
+        name: 'Wrist circles',
+        prescribe: '10× each direction',
+        tags: ['planche','hs'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'Hold both hands out in front of you, loosely fisted. Rotate slowly at the wrist — 10 circles clockwise, 10 counter-clockwise. <strong>Do this freestanding, not on the floor.</strong> Gets synovial fluid moving before any load.',
+        steps: []
+      },
+      {
+        id: 'wrist-ext',
+        name: 'Wrist extension hold',
+        prescribe: '2 × 10s',
+        tags: ['planche','hs'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'Get on all fours, fingers pointing forward. Gently shift weight forward over your hands so wrists are loaded in extension. <strong>This is the exact angle parallette and planche work demands</strong> — you\'re warming it up before adding real load. Hold 10s, rest, repeat.',
+        steps: []
+      },
+      {
+        id: 'wrist-flex',
+        name: 'Wrist flexion hold',
+        prescribe: '2 × 10s',
+        tags: ['planche','hs'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'Still on all fours — flip your hands so the <strong>backs of your hands</strong> are on the floor, fingers pointing toward your knees. Gently press down to stretch the opposite direction. Hold 10s each set. Balances out the extension load.',
+        steps: []
+      },
+      {
+        id: 'lean',
+        name: 'Planche lean',
+        prescribe: '3 × 10s',
+        tags: ['planche'],
+        feet: 'on',
+        cue: 'On parallettes, arms straight. Lean shoulders past hands — push scapulae forward (protract) and down (depress). Hold tension, breathe. 30s rest between sets.',
+        steps: [
+          { cur: true,  text: '<strong>Planche lean</strong> — feet on ground, shoulders forward' },
+          { cur: false, text: 'Tuck negatives — jump up, lower slowly, both feet off' },
+          { cur: false, text: 'Tuck planche hold — both feet off, knees to chest, static' }
+        ]
+      },
+      {
+        id: 'tuck-neg',
+        name: 'Tuck planche negatives',
+        prescribe: '3 × 3–5',
+        tags: ['planche'],
+        feet: 'off',
+        cue: 'Jump or press into tuck — knees to chest, hips raised, arms straight. Lower as slowly as possible (aim 3–4s). <strong>Only add static holds once negatives feel fully controlled.</strong>',
+        steps: [
+          { cur: false, text: 'Planche lean — feet on ground' },
+          { cur: true,  text: '<strong>Tuck negatives</strong> — both feet off, 3–4s slow descent' },
+          { cur: false, text: 'Tuck planche hold — static, 3–5s, both feet off' },
+          { cur: false, text: 'Advanced tuck — one leg extending back, body flatter' }
+        ]
+      },
+      {
+        id: 'scap',
+        name: 'Scapular pull-ups',
+        prescribe: '2 × 8',
+        tags: ['fl','mu'],
+        feet: 'off',
+        cue: 'Dead hang, no elbow bend. Depress and retract scapulae to rise ~2–3 inches. Lower slowly. <strong>Initiate from shoulder blades, not arms.</strong> Most people skip this and stall on front lever and muscle-up.',
+        steps: [
+          { cur: true,  text: '<strong>Scapular pull-ups</strong> — 2 × 8, slow and deliberate' },
+          { cur: false, text: 'Scapular holds — hang and hold depressed position for time' }
+        ]
+      },
+      {
+        id: 'hang',
+        name: 'Hangboard + dead hang',
+        prescribe: '2–3 sets',
+        tags: ['grip'],
+        feet: 'off',
+        cue: '<strong>Hangboard:</strong> open-crimp grip on largest holds. 10s hang, rest 3× that duration. Progress to smaller holds only when current ones feel easy. <strong>Dead hang on bar:</strong> one max-time set — log it weekly.',
+        steps: [
+          { cur: true,  text: '<strong>Large holds, open crimp</strong> — build baseline' },
+          { cur: false, text: 'Medium holds, same protocol' },
+          { cur: false, text: 'Small holds + weighted hangs' }
+        ]
+      }
+    ],
+    away: [
+      {
+        id: 'wrist-circles',
+        name: 'Wrist circles',
+        prescribe: '10× each direction',
+        tags: ['planche','hs'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'Hold hands out in front, loosely fisted. 10 circles each direction. Freestanding — not on the floor.',
+        steps: []
+      },
+      {
+        id: 'wrist-ext',
+        name: 'Wrist extension hold',
+        prescribe: '2 × 10s',
+        tags: ['planche','hs'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'All fours, fingers forward. Shift weight over hands until wrists are in extension. Hold 10s. <strong>Same angle as floor planche work</strong> — warms up the exact position you\'re about to load.',
+        steps: []
+      },
+      {
+        id: 'wrist-flex',
+        name: 'Wrist flexion hold',
+        prescribe: '2 × 10s',
+        tags: ['planche','hs'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'Flip hands so backs of hands are on the floor, fingers toward knees. Gentle press down. Hold 10s each set.',
+        steps: []
+      },
+      {
+        id: 'lean-floor',
+        name: 'Planche lean (floor)',
+        prescribe: '3 × 10s',
+        tags: ['planche'],
+        feet: 'on',
+        cue: 'Same as parallette version but hands flat on floor (or on fists if wrists are sensitive). Lean shoulders forward past hands, protract and depress scapulae. <strong>The position is identical — you just have less range of motion at the bottom.</strong>',
+        steps: [
+          { cur: true,  text: '<strong>Floor planche lean</strong> — hands flat or on fists' },
+          { cur: false, text: 'Same progression as home version' }
+        ]
+      },
+      {
+        id: 'hollow-am',
+        name: 'Hollow body hold',
+        prescribe: '3 × 20–30s',
+        tags: ['core','planche'],
+        feet: 'on',
+        cue: 'Arms overhead, legs straight and low (~30–45°). Lower back stays flat — raise legs if it arches. <strong>Replaces scapular pull-ups as the morning activation when no bar is available.</strong>',
+        steps: [
+          { cur: false, text: 'Tuck hollow — knees drawn in, arms overhead' },
+          { cur: true,  text: '<strong>Hollow body hold</strong> — legs straight, low, back flat' },
+          { cur: false, text: 'Hollow body rocks — add gentle rocking motion' }
+        ]
+      },
+      {
+        id: 'pike-hold',
+        name: 'Pike push-up hold',
+        prescribe: '3 × 10s',
+        tags: ['hs','planche'],
+        feet: 'on',
+        cue: 'Downward dog position, then walk hands back until hips are stacked above. Hold with shoulders pressing into ears. <strong>Approximates planche lean shoulder position without equipment.</strong>',
+        steps: [
+          { cur: true, text: '<strong>Pike hold</strong> — hips high, shoulders stacked' },
+          { cur: false, text: 'Pike push-ups — lower head toward floor and press up' }
+        ]
+      }
+    ],
+    rest: [
+      {
+        id: 'wrist-circles',
+        name: 'Wrist circles',
+        prescribe: '10× each direction',
+        tags: ['planche'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'Hands out in front, loosely fisted. 10 slow circles each direction. Freestanding — not on the floor. Keep the joints mobile even on rest days.',
+        steps: []
+      },
+      {
+        id: 'wrist-ext',
+        name: 'Wrist extension hold',
+        prescribe: '2 × 10s',
+        tags: ['planche'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'All fours, fingers forward, shift weight gently over hands. 10s hold, no strain. Active recovery.',
+        steps: []
+      },
+      {
+        id: 'wrist-flex',
+        name: 'Wrist flexion hold',
+        prescribe: '2 × 10s',
+        tags: ['planche'],
+        group: 'warmup',
+        feet: 'on',
+        cue: 'Backs of hands on floor, fingers toward knees. Gentle press. 10s hold.',
+        steps: []
+      }
+    ]
+  },
+  evening: {
+    home: [
+      {
+        id: 'archer',
+        name: 'Archer pull-ups',
+        prescribe: '3 × 4–6 each side',
+        tags: ['mu','fl'],
+        feet: 'off',
+        cue: 'Wide grip. Pull toward one hand while the other extends straight out to the side. More effective than standard pull-ups for muscle-up prep. <strong>If too hard: substitute 5s slow negatives from top.</strong>',
+        steps: [
+          { cur: false, text: 'Slow negatives — 5s descent, regular grip' },
+          { cur: true,  text: '<strong>Archer pull-ups</strong> — 3 × 4–6 each side' },
+          { cur: false, text: 'Chest-to-bar pull-ups — sternum touches bar every rep' }
+        ]
+      },
+      {
+        id: 'mu-neg',
+        name: 'Muscle-up negatives',
+        prescribe: '3 × 3–5',
+        tags: ['mu'],
+        feet: 'off',
+        cue: 'Jump to top of bar (arms straight, support position). Slowly lower through the transition — wrists rotating as you descend. <strong>Take 3–4 seconds. This is exactly where muscle-ups fail.</strong> Once 5 controlled negatives feel easy, try full reps.',
+        steps: [
+          { cur: true,  text: '<strong>Muscle-up negatives</strong> — 3–4s descent, 3–5 reps' },
+          { cur: false, text: 'False grip hang + row — wrist-over-bar shortcut' },
+          { cur: false, text: 'Full muscle-up — clean, no kip' }
+        ]
+      },
+      {
+        id: 'tuck-fl',
+        name: 'Tuck front lever hold',
+        prescribe: '3 × 5–10s',
+        tags: ['fl'],
+        feet: 'off',
+        cue: 'Hang from bar, knees drawn to chest, hips raised so body is roughly horizontal, arms straight. <strong>Static hold only — do not pull up and down yet.</strong> Progress to tuck rows only after you can hold 10s comfortably.',
+        steps: [
+          { cur: true,  text: '<strong>Tuck hold</strong> — knees in, body horizontal, static 5–10s' },
+          { cur: false, text: 'Tuck rows — pull up/down from tuck position' },
+          { cur: false, text: 'Straddle hold — legs split wide, body horizontal' },
+          { cur: false, text: 'Full front lever — straight body, 5+ seconds' }
+        ]
+      },
+      {
+        id: 'par-push',
+        name: 'Parallette push-ups',
+        prescribe: '3 × 10–15',
+        tags: ['planche'],
+        feet: 'on',
+        cue: 'Hands on parallettes, wider than shoulder-width, fingers forward or slightly out. Full range — deeper than floor push-ups allow. <strong>Add 2s pause at bottom once 15 reps feels easy.</strong>',
+        steps: [
+          { cur: true,  text: '<strong>Parallette push-ups</strong> — 3 × 10–15' },
+          { cur: false, text: 'With 2s pause at bottom — 3 × 10' },
+          { cur: false, text: 'Pseudo planche push-ups — lean forward, shoulders past hands' }
+        ]
+      },
+      {
+        id: 'lsit',
+        name: 'L-sit progressions',
+        prescribe: '3 × max hold',
+        tags: ['lsit'],
+        feet: 'off',
+        cue: 'On parallettes, arms straight, press down. Limiting factor is usually hip flexors, not arms. <strong>Even 3–5s per set daily adds up fast.</strong>',
+        steps: [
+          { cur: true,  text: '<strong>Tuck hold</strong> — one or both knees bent, feet off ground' },
+          { cur: false, text: 'One leg extended — alternate which leg is straight' },
+          { cur: false, text: 'Full L-sit — both legs parallel, 10+ seconds' }
+        ]
+      },
+      {
+        id: 'hollow',
+        name: 'Hollow body hold',
+        prescribe: '3 × 20–30s',
+        tags: ['core','planche'],
+        feet: 'on',
+        cue: 'Arms overhead, legs straight and low (~30–45°). Lower back stays flat — raise legs if it arches. <strong>Same body tension as planche, front lever, and muscle-up. Most transferable exercise in this program.</strong>',
+        steps: [
+          { cur: false, text: 'Tuck hollow — knees drawn in, arms overhead' },
+          { cur: true,  text: '<strong>Hollow body hold</strong> — legs straight, low, back flat' },
+          { cur: false, text: 'Hollow body rocks — add gentle rocking motion' }
+        ]
+      },
+      {
+        id: 'wall-hs',
+        name: 'Wall handstand hold',
+        prescribe: '2 × 20–30s',
+        tags: ['hs'],
+        feet: 'off',
+        cue: '<strong>Chest to wall, not back to wall</strong> — forces proper shoulder stacking. Kick up with your healthy leg. Arms locked out, scapulae pushed up. <strong>Skip if the boot makes the kick-up feel unstable.</strong>',
+        steps: [
+          { cur: true,  text: '<strong>Wall hold, chest to wall</strong> — healthy leg kick-up' },
+          { cur: false, text: 'Controlled kick-up and down practice' },
+          { cur: false, text: 'Freestanding attempts — once boot is off' }
+        ]
+      }
+    ],
+    away: [
+      {
+        id: 'archer-push',
+        name: 'Archer push-ups',
+        prescribe: '3 × 5–8 each side',
+        tags: ['planche','mu'],
+        feet: 'on',
+        cue: 'Wide push-up position. Lower toward one hand while the other arm extends straight out. <strong>Floor substitute for archer pull-ups</strong> — loads each side unilaterally and builds the chest strength planche demands.',
+        steps: [
+          { cur: true, text: '<strong>Archer push-ups</strong> — 3 × 5–8 each side' },
+          { cur: false, text: 'Add a pause at the bottom — 2s hold each rep' }
+        ]
+      },
+      {
+        id: 'pike-pu',
+        name: 'Pike push-ups',
+        prescribe: '3 × 8–12',
+        tags: ['hs','planche'],
+        feet: 'on',
+        cue: 'Hips high, hands close together. Lower head toward floor between hands, press back up. <strong>Targets the overhead pushing strength needed for handstand.</strong> Elevate feet on a chair to increase difficulty.',
+        steps: [
+          { cur: true,  text: '<strong>Pike push-ups</strong> — 3 × 8–12, hips high' },
+          { cur: false, text: 'Feet elevated pike push-ups — chair or bed' },
+          { cur: false, text: 'Wall handstand hold — once boot is off' }
+        ]
+      },
+      {
+        id: 'lsit-floor',
+        name: 'L-sit (floor / chairs)',
+        prescribe: '3 × max hold',
+        tags: ['lsit'],
+        feet: 'off',
+        cue: 'Press up on fists or use two chairs if available. Tuck one or both knees to start. <strong>Less range than parallettes but the hip flexor demand is identical.</strong>',
+        steps: [
+          { cur: true,  text: '<strong>Tuck hold</strong> — fists or chairs, one/both knees bent' },
+          { cur: false, text: 'One leg extended — alternate legs' },
+          { cur: false, text: 'Full L-sit — both legs parallel' }
+        ]
+      },
+      {
+        id: 'lean-floor-eve',
+        name: 'Planche lean (floor)',
+        prescribe: '3 × 10s',
+        tags: ['planche'],
+        feet: 'on',
+        cue: 'Hands flat or on fists. Lean shoulders forward past hands, protract and depress scapulae. Same position as the parallette version.',
+        steps: [
+          { cur: true, text: '<strong>Floor planche lean</strong> — maintain daily habit' }
+        ]
+      },
+      {
+        id: 'hollow-away',
+        name: 'Hollow body hold',
+        prescribe: '3 × 20–30s',
+        tags: ['core','planche'],
+        feet: 'on',
+        cue: 'Arms overhead, legs straight and low. Lower back stays flat. <strong>The one exercise that survives every environment. Never skip this one.</strong>',
+        steps: [
+          { cur: true, text: '<strong>Hollow body hold</strong> — the constant across all modes' }
+        ]
+      }
+    ],
+    rest: [
+      {
+        id: 'hollow-rest',
+        name: 'Hollow body hold',
+        prescribe: '2 × 20s',
+        tags: ['core'],
+        feet: 'on',
+        cue: 'Light version — arms overhead, legs straight, back flat. <strong>Just keeping the pattern alive.</strong> Stop before any fatigue sets in.',
+        steps: []
+      }
+    ]
+  }
+};
+
+const TAG_LABELS = { planche:'planche', fl:'front lever', mu:'muscle-up', lsit:'L-sit', grip:'grip', hs:'handstand', core:'core' };
+
+/* ─── STATE ─── */
+const STORE_KEY = 'cal_v1';
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e) { return {}; }
+}
+
+function save(s) { localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
+
+function getState() {
+  const s = load();
+  if (!s.days) s.days = {};
+  if (!s.mode) s.mode = 'home';
+  return s;
+}
+
+function getDay(s, key) {
+  if (!s.days[key]) s.days[key] = { morning: false, evening: false };
+  return s.days[key];
+}
+
+/* ─── RENDER ─── */
+
+function buildExCard(ex, idx, session) {
+  const feet = ex.feet === 'on'
+    ? '<span class="feet-pill feet-on">Feet on ground</span>'
+    : ex.feet === 'off'
+      ? '<span class="feet-pill feet-off">Feet off ground</span>'
+      : '';
+
+  const tags = ex.tags.map(t => `<span class="tag ${t}">${TAG_LABELS[t]||t}</span>`).join('');
+
+  let steps = '';
+  if (ex.steps.length) {
+    steps = `<div class="prog-label">Progression</div><div class="prog-steps">` +
+      ex.steps.map((s,i) => `
+        <div class="prog-row ${s.cur?'cur':''}">
+          <div class="prog-n">${s.cur?'<span class="prog-dot"></span>':''} ${i+1}</div>
+          <div class="prog-t">${s.text}</div>
+        </div>`).join('') +
+      `</div>`;
+  }
+
+  return `
+    <div class="ex-card" data-id="${session}-${ex.id}">
+      <div class="ex-head">
+        <div class="ex-num">${idx+1}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-prescribe">${ex.prescribe}</div>
+          <div class="ex-tags">${tags}</div>
+        </div>
+        <div class="ex-chevron">▾</div>
+      </div>
+      <div class="ex-body">
+        ${feet}
+        <div class="ex-cue">${ex.cue}</div>
+        ${steps}
+      </div>
+    </div>`;
+}
+
+function buildExList(exes, session) {
+  let html = '';
+  let i = 0;
+  let mainIdx = 1;
+  while (i < exes.length) {
+    const ex = exes[i];
+    if (ex.group === 'warmup') {
+      let warmups = [];
+      while (i < exes.length && exes[i].group === 'warmup') {
+        warmups.push(exes[i]);
+        i++;
+      }
+      html += `<div class="warmup-group"><div class="warmup-group-label">Wrist warm-up — before every session</div>`;
+      warmups.forEach((w, wi) => { html += buildExCard(w, wi + 1, session); });
+      html += `</div>`;
+    } else {
+      html += buildExCard(ex, mainIdx, session);
+      mainIdx++;
+      i++;
+    }
+  }
+  return html;
+}
+
+function render() {
+  const s = getState();
+  const today = todayKey();
+  const day = getDay(s, today);
+  const mode = s.mode || 'home';
+
+  // Mode strip
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+
+  // Callouts
+  document.getElementById('away-callout').style.display = mode === 'away' ? 'block' : 'none';
+  document.getElementById('rest-callout').style.display = mode === 'rest' ? 'block' : 'none';
+
+  // Session visibility
+  const mornSec = document.getElementById('morning-section');
+  const eveSec  = document.getElementById('evening-section');
+  if (mode === 'rest') {
+    mornSec.querySelector('.sec-h h2').textContent = 'Active recovery';
+    mornSec.querySelector('.sec-sub').textContent = 'Rest day · ~2 min';
+    eveSec.style.display = 'none';
+  } else {
+    mornSec.querySelector('.sec-h h2').textContent = 'Morning';
+    mornSec.querySelector('.sec-sub').textContent = 'Skill work · ~5 min';
+    eveSec.style.display = 'block';
+  }
+
+  // Exercise lists
+  const mExes = EXERCISES.morning[mode] || EXERCISES.morning.home;
+  const eExes = EXERCISES.evening[mode] || EXERCISES.evening.home;
+  document.getElementById('morning-exercises').innerHTML = buildExList(mExes, 'morning');
+  document.getElementById('evening-exercises').innerHTML = (mode==='rest' ? [] : eExes).length ? buildExList(mode==='rest' ? [] : eExes, 'evening') : '';
+
+  // Re-bind expand listeners
+  document.querySelectorAll('.ex-head').forEach(h => {
+    h.addEventListener('click', () => h.closest('.ex-card').classList.toggle('open'));
+  });
+
+  // Session checks
+  const mDone = !!day.morning;
+  const eDone = !!day.evening;
+  document.getElementById('sess-morning').classList.toggle('done', mDone);
+  document.getElementById('sess-evening').classList.toggle('done', eDone);
+
+  // Day status
+  const dot = document.getElementById('day-dot');
+  const txt = document.getElementById('day-status-text');
+  const card = document.getElementById('status-card');
+  dot.className = 'day-dot';
+  card.className = 'status-card';
+  if (mode === 'rest') {
+    if (mDone) {
+      dot.classList.add('green');
+      txt.textContent = 'Rest day complete';
+      card.classList.add('both-done');
+    } else {
+      txt.textContent = 'Rest day — just hollow body & wrist prep';
+    }
+  } else if (mDone && eDone) {
+    dot.classList.add('green');
+    txt.textContent = 'Both sessions done — full day';
+    card.classList.add('both-done');
+  } else if (mDone || eDone) {
+    dot.classList.add('amber');
+    txt.textContent = (mDone ? 'Morning done' : 'Evening done') + ' — one session logged';
+    card.classList.add('one-done');
+  } else {
+    dot.classList.add('red');
+    txt.textContent = 'Neither session logged yet';
+  }
+
+  // Week strip
+  renderWeekStrip(s);
+}
+
+function renderWeekStrip(s) {
+  const today = todayKey();
+  const now = new Date();
+  const dow = now.getDay();
+  const strip = document.getElementById('week-strip');
+  const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - dow + i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const isToday = key === today;
+    const dayData = s.days && s.days[key];
+    let dotClass = '';
+    if (isToday) {
+      dotClass = 'today';
+    } else if (dayData) {
+      if (dayData.morning && dayData.evening) dotClass = 'green';
+      else if (dayData.morning || dayData.evening) dotClass = 'amber';
+      else if (d < now) dotClass = 'red';
+    } else if (d < now) {
+      dotClass = 'red';
+    }
+    html += `<div class="w-day"><div class="w-dow">${DAYS[i]}</div><div class="w-dot ${dotClass}"></div></div>`;
+  }
+  strip.innerHTML = html;
+}
+
+/* ─── INTERACTIONS ─── */
+
+// Mode strip
+document.getElementById('mode-strip').addEventListener('click', e => {
+  const btn = e.target.closest('.mode-btn');
+  if (!btn) return;
+  const s = getState();
+  s.mode = btn.dataset.mode;
+  save(s);
+  render();
+});
+
+// Session check clicks
+document.getElementById('sess-morning').addEventListener('click', () => {
+  const s = getState();
+  const day = getDay(s, todayKey());
+  day.morning = !day.morning;
+  save(s);
+  render();
+});
+document.getElementById('sess-evening').addEventListener('click', () => {
+  const s = getState();
+  const day = getDay(s, todayKey());
+  day.evening = !day.evening;
+  save(s);
+  render();
+});
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+/* ─── INIT ─── */
+render();
+</script>
+</body>
+</html>
