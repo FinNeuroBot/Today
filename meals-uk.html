@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>Meals · London</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Design system copied from Today (index.html) so both pages match */
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface-2: #242424; --surface-3: #2e2e2e;
+    --border: rgba(255,255,255,0.08); --border-2: rgba(255,255,255,0.14);
+    --text: #f5f5f0; --muted: #8a8a82; --dim: #5a5a55;
+    --accent: #c9a961; --accent-2: #e8d4a0;
+    --green: #7fa650; --amber: #d99850; --red: #c26a5a; --blue: #6f8fb0;
+    --serif: 'Instrument Serif', Georgia, serif;
+    --sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  html, body {
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    font-size: 15px; line-height: 1.55; letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased; min-height: 100vh; overscroll-behavior-y: contain;
+  }
+  body { padding: 0 0 env(safe-area-inset-bottom); max-width: 520px; margin: 0 auto; }
+  button, input { font-family: var(--sans); color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Header + tabs (identical to Today) */
+  /* Header pads itself below the phone's status bar, so content never shows through behind the clock */
+  header { padding: calc(1.25rem + env(safe-area-inset-top)) 1.25rem 0.75rem; position: sticky; top: 0; background: var(--bg); z-index: 10; border-bottom: 1px solid var(--border); }
+  .h-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
+  .h-date { font-family: var(--serif); font-size: 1.7rem; font-style: italic; font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
+  .h-date em { color: var(--accent); }
+  .h-right { display: flex; align-items: baseline; gap: 1rem; }
+  .h-meta { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+  .h-nav-link { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.06em; color: var(--muted); text-decoration: none; text-transform: uppercase; transition: color 0.15s; }
+  .h-nav-link:hover { color: var(--accent); }
+  .tabs { display: flex; margin: 0 -1.25rem -0.75rem; padding: 0 1.25rem; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 0.7rem 0; margin-right: 1.5rem; font-size: 0.78rem; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; letter-spacing: 0.02em; white-space: nowrap; transition: color 0.15s; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:last-child { margin-right: 0; }
+
+  main { padding: 1rem 1.25rem 3rem; }
+  .section { display: none; animation: fadeIn 0.2s; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .section { animation: none; } }
+
+  /* Mode strip (rest / training) */
+  .mode-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 1rem; }
+  .mode-btn { padding: 0.55rem 0.4rem; background: transparent; border: none; border-radius: 7px; color: var(--muted); font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .mode-btn.active { background: var(--accent); color: #1a1a1a; }
+
+  /* Hero */
+  .hero { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.1rem 0.9rem; margin-bottom: 1rem; }
+  .hero-row-1 { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.15rem; }
+  .hero-day { font-family: var(--serif); font-size: 1.55rem; font-style: italic; line-height: 1; }
+  .hero-kcal { font-family: var(--mono); font-size: 0.85rem; color: var(--accent-2); font-weight: 500; }
+  .hero-type { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
+
+  /* Section headers */
+  .sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 1.5rem 0 0.6rem; }
+  .sec-h:first-child { margin-top: 0.25rem; }
+  .sec-h h2 { font-family: var(--serif); font-size: 1.3rem; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+  .sec-h .sec-sub { font-family: var(--mono); font-size: 0.65rem; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; text-align: right; }
+  .intro { font-size: 0.82rem; color: var(--muted); line-height: 1.55; margin-bottom: 1rem; }
+
+  /* Meal / recipe cards */
+  .meal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+  .meal-head { display: flex; align-items: center; gap: 10px; padding: 0.8rem 0.9rem; cursor: pointer; user-select: none; }
+  .meal-info { flex: 1; min-width: 0; }
+  .meal-time { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .meal-name { font-size: 0.95rem; font-weight: 500; margin-top: 1px; }
+  .meal-macros { display: flex; gap: 10px; flex-shrink: 0; font-family: var(--mono); font-size: 0.68rem; color: var(--accent-2); }
+  .meal-expand { color: var(--muted); font-size: 1.1rem; transition: transform 0.2s; flex-shrink: 0; width: 12px; }
+  .meal.open .meal-expand { transform: rotate(180deg); }
+  .meal-body { display: none; padding: 0.8rem 0.9rem 0.9rem; border-top: 1px solid var(--border); }
+  .meal.open .meal-body { display: block; }
+  .meal-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; line-height: 1.55; }
+  .meal-desc strong { color: var(--accent-2); font-weight: 500; font-family: var(--mono); font-size: 0.75rem; }
+  .ing-list { list-style: none; font-size: 0.83rem; margin-bottom: 0.8rem; }
+  .ing-list li { display: flex; justify-content: space-between; gap: 10px; padding: 0.25rem 0; border-bottom: 1px dashed var(--border); }
+  .ing-list li:last-child { border: none; }
+  .ing-list li span:first-child::before { content: "—"; color: var(--dim); margin-right: 8px; }
+  .ing-list .q { font-family: var(--mono); font-size: 0.75rem; color: var(--accent-2); white-space: nowrap; }
+  .steps { padding-left: 1.1rem; font-size: 0.83rem; margin-bottom: 0.8rem; }
+  .steps li { margin-bottom: 0.3rem; }
+  .macro-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; background: var(--surface-2); padding: 0.55rem; border-radius: 8px; margin-top: 0.5rem; }
+  .mb-cell { text-align: center; }
+  .mb-v { font-family: var(--mono); font-size: 0.9rem; font-weight: 500; color: var(--accent-2); }
+  .mb-l { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+  .prep-note { background: rgba(201,169,97,0.08); border: 1px solid rgba(201,169,97,0.2); border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 0.78rem; color: var(--accent-2); margin-bottom: 0.75rem; }
+  .prep-note strong { color: var(--accent); font-weight: 500; }
+
+  /* Task list */
+  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.35rem 0.9rem; }
+  .task { display: flex; gap: 10px; padding: 0.55rem 0; font-size: 0.85rem; border-bottom: 1px dashed var(--border); }
+  .task:last-child { border: none; }
+  .task::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: 0.5rem; flex-shrink: 0; }
+
+  /* Cook session */
+  .cook-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem; }
+  .cook-when { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.6rem; }
+  .tl { display: grid; grid-template-columns: 3.4rem 1fr; gap: 0.6rem; padding: 0.6rem 0; border-top: 1px dashed var(--border); font-size: 0.85rem; }
+  .tl-t { font-family: var(--mono); font-size: 0.75rem; color: var(--accent-2); padding-top: 0.1rem; }
+
+  /* Week cards */
+  .w-day-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 0.9rem; margin-bottom: 6px; display: flex; gap: 12px; }
+  .w-day-card.is-today { border-color: var(--accent); background: rgba(201,169,97,0.04); }
+  .wd-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--surface-3); flex-shrink: 0; margin-top: 0.35rem; }
+  .wd-dot.today { background: var(--accent); box-shadow: 0 0 0 3px rgba(201,169,97,0.2); }
+  .wd-info { flex: 1; min-width: 0; }
+  .wd-dow { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .wd-meals { font-size: 0.85rem; margin-top: 3px; line-height: 1.5; }
+  .wd-meals span { color: var(--dim); font-family: var(--mono); font-size: 0.65rem; margin-right: 6px; }
+  .wd-kcal { font-family: var(--mono); font-size: 0.72rem; color: var(--accent-2); text-align: right; flex-shrink: 0; }
+  .wd-kcal small { display: block; color: var(--green); }
+
+  /* Settings rows */
+  .settings-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.85rem 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border: none; }
+  .sr-label { font-size: 0.88rem; }
+  .sr-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .sr-action { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); background: none; border: none; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  .sr-action.danger { color: var(--red); }
+  .link { background: none; border: none; color: var(--accent); text-decoration: underline; font-size: 0.72rem; cursor: pointer; padding: 0; }
+
+  /* Pills */
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 4px; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; background: var(--surface-2); color: var(--muted); vertical-align: 1px; }
+  .pill.green { background: rgba(127,166,80,0.15); color: var(--green); }
+  .pill.gold { background: rgba(201,169,97,0.15); color: var(--accent); }
+  .pill.amber { background: rgba(217,152,80,0.15); color: var(--amber); }
+
+  /* Grocery (identical pattern to Today) */
+  .groc-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 1rem; }
+  .groc-toggle button { flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 7px; color: var(--muted); font-size: 0.8rem; font-weight: 500; cursor: pointer; }
+  .groc-toggle button.active { background: var(--accent); color: #1a1a1a; }
+  .store { margin-bottom: 1.25rem; }
+  .store-h { font-family: var(--serif); font-size: 1.15rem; font-style: italic; margin-bottom: 0.5rem; color: var(--accent-2); }
+  .store-sub { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.6rem; margin-top: -0.3rem; }
+  .groc-item { display: flex; align-items: flex-start; gap: 10px; padding: 0.7rem 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 5px; cursor: pointer; user-select: none; }
+  .groc-item.checked { opacity: 0.45; background: var(--surface-2); }
+  .groc-item.checked .g-name { text-decoration: line-through; color: var(--muted); }
+  .g-check { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--border-2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+  .groc-item.checked .g-check { background: var(--accent); border-color: var(--accent); }
+  .g-check::after { content: ""; width: 7px; height: 4px; border-left: 2px solid #1a1a1a; border-bottom: 2px solid #1a1a1a; transform: rotate(-45deg) translate(1px, -1px); opacity: 0; }
+  .groc-item.checked .g-check::after { opacity: 1; }
+  .g-body { flex: 1; min-width: 0; }
+  .g-name { font-size: 0.9rem; font-weight: 500; }
+  .g-meta { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+  .g-note { font-size: 0.74rem; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+  .g-price { font-family: var(--mono); font-size: 0.72rem; color: var(--green); flex-shrink: 0; }
+  .total { text-align: center; font-family: var(--mono); font-size: 0.85rem; color: var(--accent); margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .total small { display: block; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); margin-top: 0.4rem; }
+
+  /* Price inputs */
+  .price-in { width: 5.2rem; background: var(--surface-2); border: 1px solid var(--border-2); border-radius: 7px; padding: 0.4rem 0.5rem; font-family: var(--mono); font-size: 0.8rem; color: var(--text); text-align: right; }
+  .price-r { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+
+  .cb-active { background: rgba(201,169,97,0.08); border: 1px solid rgba(201,169,97,0.3); border-radius: 10px; padding: 0.9rem; margin-bottom: 1rem; font-size: 0.85rem; }
+  .foot { font-size: 0.75rem; color: var(--dim); margin-top: 2rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-top">
+    <div class="h-date">Meals<em>.</em></div>
+    <div class="h-right">
+      <div class="h-meta">London</div>
+      <a href="index.html" class="h-nav-link">← Today</a>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="today">Today</button>
+    <button class="tab" data-tab="week">Week</button>
+    <button class="tab" data-tab="recipes">Recipes</button>
+    <button class="tab" data-tab="shop">Shop</button>
+    <button class="tab" data-tab="prices">Prices</button>
+  </div>
+</header>
+
+<main>
+  <div class="section active" id="tab-today"></div>
+  <div class="section" id="tab-week"></div>
+  <div class="section" id="tab-recipes"></div>
+  <div class="section" id="tab-shop"></div>
+  <div class="section" id="tab-prices"></div>
+</main>
+
+<script>
+/* ============================================================
+   DATA — the single source of truth. Edit here; everything
+   (macros, shopping lists, costs) is calculated from it.
+   Macros per 100 g. unit 'each' items use `g` grams per item.
+   price: £ per kg (or per item for unit 'each').
+   src: 'online' = seen online Oct 2026, 'guess' = estimate,
+        'checked' = you confirmed it in store (set on Prices tab).
+   buy: 'split' = bought across Shop A + B by day,
+        'A' = whole week bought in Shop A, 'pantry' = long-life.
+   ============================================================ */
+const ING = {
+  skyr:     {n:'Skyr, natural',            m:[63,10.6,4,0.2],   price:2.78, src:'online', buy:'split', loc:'fridge',   pack:[450,'pot']},
+  whey:     {n:'Whey protein',             m:[380,76.7,6.7,6.3], price:19.3, src:'online', buy:'pantry', loc:'cupboard'},
+  oats:     {n:'Porridge oats',            m:[375,12,60,8],   price:1.00, src:'guess',  buy:'pantry', loc:'cupboard'},
+  berries:  {n:'Frozen mixed berries',     m:[40,0.9,7,0.3],  price:4.50, src:'guess',  buy:'A',      loc:'freezer'},
+  chia:     {n:'Chia seeds',               m:[486,17,8,31],   price:10.0, src:'guess',  buy:'pantry', loc:'cupboard'},
+  pb:       {n:'Peanut butter',            m:[600,25,13,50],  price:4.00, src:'guess',  buy:'pantry', loc:'cupboard'},
+  oatmilk:  {n:'Oat milk, unsweetened', u:'ml',    m:[45,1,6.5,1.5],  price:1.10, src:'guess',  buy:'pantry', loc:'cupboard'},
+  banana:   {n:'Bananas',   unit:'each', g:120, m:[89,1.1,20,0.3], price:0.17, src:'guess', buy:'split', loc:'cupboard'},
+  egg:      {n:'Eggs, large', unit:'each', g:58, m:[143,12.6,0.7,9.5], price:0.18, src:'guess', buy:'A', loc:'fridge', pack:[15,'box of 15']},
+  eggwhite: {n:'Egg white', unit:'each', g:33, m:[52,10.9,0.7,0.2], price:0, src:'guess', buy:'A', loc:'fridge', asEgg:true},
+  turkey:   {n:'Turkey mince, 7% fat',     m:[147,20.5,0,7],  price:7.00, src:'online', buy:'split', loc:'fridge',   pack:[500,'500 g pack']},
+  chicken:  {n:'Chicken breast',           m:[110,24,0,1.5],  price:6.49, src:'online', buy:'split', loc:'fridge'},
+  salmon:   {n:'Salmon fillets, frozen',   m:[208,20,0,13.4], price:15.8, src:'online', buy:'A',      loc:'freezer'},
+  rice:     {n:'Rice (weigh dry)',         m:[350,7.5,78,0.8],price:1.20, src:'guess',  buy:'pantry', loc:'cupboard'},
+  pasta:    {n:'Pasta (weigh dry)',        m:[355,12.5,72,1.5],price:0.90,src:'guess',  buy:'pantry', loc:'cupboard'},
+  potato:   {n:'Potatoes',                 m:[77,2,17,0.1],   price:0.70, src:'guess',  buy:'A',      loc:'cupboard'},
+  sweetpot: {n:'Sweet potatoes',           m:[86,1.6,20,0.1], price:1.20, src:'guess',  buy:'A',      loc:'cupboard'},
+  broccoli: {n:'Broccoli',                 m:[34,2.8,2.8,0.4],price:2.00, src:'guess',  buy:'split', loc:'fridge',   pack:[350,'head']},
+  pepper:   {n:'Peppers',                  m:[31,1,6,0.3],    price:3.00, src:'guess',  buy:'split', loc:'fridge',   pack:[160,'pepper']},
+  cucumber: {n:'Cucumber',                 m:[15,0.7,3,0.1],  price:2.00, src:'guess',  buy:'split', loc:'fridge',   pack:[350,'cucumber']},
+  spinach:  {n:'Baby spinach',             m:[23,2.9,1.4,0.4],price:4.00, src:'guess',  buy:'split', loc:'fridge',   pack:[200,'bag']},
+  courgette:{n:'Courgettes',               m:[17,1.2,3,0.3],  price:2.00, src:'guess',  buy:'split', loc:'fridge',   pack:[200,'courgette']},
+  avocado:  {n:'Avocado',                  m:[160,2,1.9,14.7],price:5.00, src:'guess',  buy:'split', loc:'fridge',   pack:[150,'avocado']},
+  beans:    {n:'Black beans, tinned (drained)', m:[100,7,13,0.5], price:2.90, src:'guess', buy:'pantry', loc:'cupboard', pack:[240,'tin']},
+  lentils:  {n:'Green lentils, dried',     m:[340,24.5,49,1.2],price:2.50,src:'guess',  buy:'pantry', loc:'cupboard'},
+  tomatoes: {n:'Chopped tomatoes, tinned', m:[22,1.1,3.6,0.1],price:1.10, src:'guess',  buy:'pantry', loc:'cupboard', pack:[400,'tin']},
+  onion:    {n:'Onions',                   m:[40,1.1,8,0.1],  price:0.90, src:'guess',  buy:'A',      loc:'cupboard', pack:[150,'onion']},
+  oil:      {n:'Olive oil',                m:[884,0,0,100],   price:7.00, src:'guess',  buy:'pantry', loc:'cupboard'},
+  sesame:   {n:'Sesame oil',               m:[884,0,0,100],   price:10.0, src:'guess',  buy:'pantry', loc:'cupboard'},
+  soy:      {n:'Soy sauce',                m:[53,8,5,0],      price:3.00, src:'guess',  buy:'pantry', loc:'cupboard'},
+  salsa:    {n:'Salsa (jar)',              m:[30,1.2,6,0.2],  price:3.50, src:'guess',  buy:'pantry', loc:'fridge'},
+  dates:    {n:'Pitted dates',             m:[282,2.5,64,0.4],price:6.80, src:'online', buy:'pantry', loc:'cupboard'},
+};
+
+const R = {
+  skyrbowl:{n:'Skyr protein bowl', slot:'Breakfast', ing:{skyr:250,whey:30,oats:50,berries:100,chia:10,pb:15},
+    steps:['Stir the whey into the skyr until smooth.','Microwave the frozen berries ~45 s.','Top with oats, chia and peanut butter.'],
+    keep:'No cooking. Can be mixed the night before.'},
+  oats:{n:'Overnight oats', slot:'Breakfast', ing:{oats:65,skyr:150,whey:30,oatmilk:150,chia:10,banana:0.5},
+    steps:['Night before: mix oats, skyr, whey, oat milk and chia in a 500 ml jar.','Seal and refrigerate.','Morning: slice half a banana on top.'],
+    keep:'Make the night before. Keeps 2 days.'},
+  scramble:{n:'Turkey & egg scramble', slot:'Breakfast', ing:{egg:3,eggwhite:2,turkey:100,spinach:30,salsa:30,oil:3,banana:1},
+    steps:['Brown the turkey in a little oil, 4–5 min.','Wilt the spinach in.','Add the eggs and whites, scramble until just set.','Top with salsa; banana on the side.'],
+    keep:'Cook fresh, ~10 min.'},
+  souv_rice:{n:'Souvlaki bowl · rice', slot:'Lunch', ing:{chicken:160,rice:60,pepper:80,cucumber:120,spinach:30,skyr:100,oil:15},
+    steps:['Tzatziki: skyr + dill, garlic, lemon, salt.','Layer spinach, rice, sliced chicken, pepper and cucumber.','Dress with the olive oil; pack the tzatziki separately.'],
+    keep:'Eat cold. Rice must be cooked within the last day.'},
+  souv_pasta:{n:'Souvlaki bowl · pasta', slot:'Lunch', ing:{chicken:160,pasta:60,pepper:80,cucumber:120,spinach:30,skyr:100,oil:15},
+    steps:['Same as the rice version, with pasta.','Toss the cooled pasta in the oil first so it doesn\u2019t clump.'],
+    keep:'Eat cold. Pasta keeps 2 days.'},
+  chickpot:{n:'Chicken & potato bowl', slot:'Lunch', ing:{chicken:170,potato:300,broccoli:100,oil:15,soy:16},
+    steps:['Boil potato chunks 15 min; cool.','Steam or microwave broccoli 2–3 min.','Pack with sliced chicken; dress with oil and soy.'],
+    keep:'Eat cold. Keeps 2 days.'},
+  salmon:{n:'Salmon tray bake', slot:'Dinner', ing:{salmon:200,sweetpot:220,courgette:200,oil:5,skyr:80},
+    steps:['Oven 220°C (200°C fan).','Microwave sweet potato 5 min, halve, onto the tray with sliced courgette and oil.','Add the salmon, season, lemon. Roast 12–15 min.','Skyr + lemon + dill as a dip.'],
+    keep:'Thaw salmon in the fridge the night before.'},
+  chili:{n:'Turkey & lentil chili + rice', slot:'Dinner', ing:{turkey:180,lentils:35,beans:60,tomatoes:130,onion:50,oil:5,rice:50},
+    steps:['Batch of 4: soften 4 onions\u2019 worth (200 g) in oil, brown 720 g turkey.','Add 140 g lentils, 2 tins tomatoes, 240 g beans, cumin, chili powder, smoked paprika, ~600 ml water or stock.','Simmer 45–60 min, lid ajar, until lentils are soft.','Eat 2 portions over 2 days; freeze 2 for next week. Serve with 50 g (dry) rice.'],
+    keep:'Fridge 2 days. Freezer: next week\u2019s Sun + Mon.'},
+  stirfry:{n:'Turkey stir-fry', slot:'Dinner', ing:{turkey:200,rice:70,pepper:120,courgette:150,soy:32,sesame:5},
+    steps:['Start the rice.','Brown the turkey hot in sesame oil, 3–4 min; add garlic.','Add sliced pepper and courgette, 3–4 min.','Add rice and soy, toss 2 min.'],
+    keep:'Cook fresh, ~15 min.'},
+  burrito:{n:'Burrito bowl', slot:'Dinner', ing:{egg:3,turkey:100,beans:100,rice:45,avocado:50,salsa:30,spinach:30},
+    steps:['Start the rice.','Brown the turkey with cumin; add the beans to warm.','Scramble the eggs in the same pan.','Build: rice, spinach, turkey and beans, eggs, avocado, salsa.'],
+    keep:'Cook fresh, ~15 min.'},
+  eveshake:{n:'Evening shake + skyr', slot:'Evening', ing:{whey:30,skyr:100},
+    steps:['Shake one scoop of whey with water.','Have 100 g skyr alongside (or stir it in).'],
+    keep:'Every day. The one extra that isn\u2019t optional.'},
+  bandates:{n:'Banana + dates', slot:'Snack', ing:{banana:1,dates:30}, steps:['Pack and go.'], keep:'Training days only.'},
+  banpb:{n:'Banana + peanut butter', slot:'Snack', ing:{banana:1,pb:20}, steps:['Pack and go.'], keep:'Training days only.'},
+};
+
+/* WHERE TO BUY. s = [first choice, fallback]. st: 'ok' seen stocked,
+   'likely' normally stocked but not confirmed, 'check' confirm on first trip. */
+const STORES = {
+  aldi:  {n:'Aldi, Camden High St', short:'Aldi'},
+  sc:    {n:'Sainsbury\u2019s, Camden Rd (300 m from Aldi)', short:'Sainsbury\u2019s Camden'},
+  local: {n:'Sainsbury\u2019s Local, Maiden Lane', short:'Sainsbury\u2019s Local'},
+  ice:   {n:'Iceland, Caledonian Rd', short:'Iceland'},
+  web:   {n:'Online', short:'Online'},
+};
+const WHERE = {
+  skyr:     {s:['aldi','sc'],  st:'check',  note:'Aldi has stocked \u00cdsey Skyr; also try Brooklea Authentic Greek. Only buy if the label says about 9 g protein or more per 100 g. Fallback: Arla Skyr. Use an opened pot within 3 days.'},
+  whey:     {s:['web','web'],  st:'ok',     note:'Myprotein Impact Whey, only on a discount code. Independently tested (Informed Choice / Informed Protein).'},
+  oats:     {s:['aldi','sc'],  st:'likely'},
+  berries:  {s:['aldi','ice'], st:'likely'},
+  chia:     {s:['aldi','sc'],  st:'check'},
+  pb:       {s:['aldi','sc'],  st:'likely'},
+  oatmilk:  {s:['aldi','sc'],  st:'likely', note:'Long-life carton; fridge once opened.'},
+  banana:   {s:['aldi','local'],st:'likely'},
+  egg:      {s:['aldi','local'],st:'likely'},
+  eggwhite: {s:['aldi','local'],st:'likely'},
+  turkey:   {s:['aldi','sc'],  st:'check',  note:'Aldi\u2019s Ashfields 500 g mince often shows out of stock. Fallback: Sainsbury\u2019s 7% fat 750 g pack (about \u00a37/kg).'},
+  chicken:  {s:['aldi','sc'],  st:'ok',     note:'Aldi\u2019s usual price about \u00a36.49/kg. Bigger packs are fine: freeze extra raw in meal-sized bags.'},
+  salmon:   {s:['aldi','ice'], st:'check',  note:'Frozen fillets. Compare per-kg price with Iceland.'},
+  rice:     {s:['aldi','sc'],  st:'likely'},
+  pasta:    {s:['aldi','sc'],  st:'likely'},
+  potato:   {s:['aldi','sc'],  st:'likely'},
+  sweetpot: {s:['aldi','sc'],  st:'likely'},
+  broccoli: {s:['aldi','local'],st:'likely'},
+  pepper:   {s:['aldi','local'],st:'likely'},
+  cucumber: {s:['aldi','local'],st:'likely'},
+  spinach:  {s:['aldi','local'],st:'likely'},
+  courgette:{s:['aldi','local'],st:'likely'},
+  avocado:  {s:['aldi','local'],st:'likely'},
+  beans:    {s:['aldi','sc'],  st:'check'},
+  lentils:  {s:['aldi','sc'],  st:'check'},
+  tomatoes: {s:['aldi','sc'],  st:'likely'},
+  onion:    {s:['aldi','local'],st:'likely'},
+  oil:      {s:['aldi','sc'],  st:'likely'},
+  sesame:   {s:['aldi','sc'],  st:'check'},
+  soy:      {s:['aldi','sc'],  st:'likely'},
+  salsa:    {s:['aldi','sc'],  st:'likely'},
+  dates:    {s:['aldi','sc'],  st:'check'},
+};
+const SUPPS = [
+  {n:'Creatine monohydrate', d:'5 g once a day, any time', where:'Online (Myprotein or Bulk)'},
+  {n:'Magnesium glycinate',  d:'300 mg in the evening', where:'Online, or Holland & Barrett'},
+];
+
+/* Time and reasoning for each recipe */
+const META = {
+  skyrbowl:{t:'3 min', why:'Best protein per minute of any breakfast. Peanut butter and chia put back the fat that fat-free skyr lacks; frozen berries mean no waste.'},
+  oats:{t:'5 min the night before, 0 in the morning', why:'For mornings with no time. Oats are slow-release carbs; chia adds fibre and plant omega-3.'},
+  scramble:{t:'12 min', why:'Whole eggs bring fat and choline; the turkey lifts protein without much extra fat. For mornings with time to cook.'},
+  souv_rice:{t:'5 min to pack (from Cook 1)', why:'Built to eat cold in a lecture room. The skyr tzatziki adds about 10 g protein; peppers are the plan\u2019s best vitamin C source.'},
+  souv_pasta:{t:'5 min to pack (from Cook 2 or 3)', why:'Same bowl with pasta, which keeps 2 days in the fridge where rice keeps only 1.'},
+  chickpot:{t:'5 min to pack', why:'Cold-friendly. Cooked-then-cooled potato forms some resistant starch; broccoli adds fibre and vitamins C and K.'},
+  salmon:{t:'25 min, mostly in the oven', why:'Your oily fish. Twice a week meets the NHS advice of two portions of fish a week, one of them oily.'},
+  chili:{t:'15 min hands-on + 45\u201360 min simmer (batch of 4)', why:'Lentils and beans add fibre and cheap protein and stretch the turkey. Freezes well, so it covers two weeks.'},
+  stirfry:{t:'15 min', why:'Fast, fresh, and different from the batch meals. High heat keeps the veg crisp.'},
+  burrito:{t:'15 min', why:'Beans for fibre, avocado for fat; uses up the spinach and salsa.'},
+  eveshake:{t:'1 min', why:'The cheapest protein per calorie in the plan, and what gets you to ~190 g. The skyr adds slow-digesting casein and calcium.'},
+  bandates:{t:'0 min', why:'Fast carbs for training days only.'},
+  banpb:{t:'0 min', why:'Carbs plus a little fat and protein, training days only.'},
+};
+
+/* Cook-session timelines (minutes from start). chili:true steps drop out in freezer weeks. */
+const COOK = {
+  0:{n:'Cook 1', when:'Sunday after Shop A', len:'~75 min (~45 if chili is from the freezer)', steps:[
+    ['0:00','Chop 4 onions (200 g). Oil in a large pot, soften onions 5 min.',true],
+    ['0:05','Add 720 g turkey mince, brown 6\u20138 min, breaking it up.',true],
+    ['0:13','Add rinsed lentils (140 g), 2 tins tomatoes, 240 g drained beans, 2 tsp cumin, 1 tsp chili powder, 1 tsp smoked paprika, ~600 ml water. Simmer, lid ajar, 45\u201360 min. Stir every 10 min.',true],
+    ['0:15','Oven 200\u00b0C fan. Season 490 g chicken (3 portions), into the oven 20\u201322 min.'],
+    ['0:15','Second pot: 220 g rice (today\u2019s lunch + dinner, Monday\u2019s lunch + dinner). 12\u201315 min.'],
+    ['0:30','Rice done: spread on a plate to cool quickly. It must be in the fridge within an hour. Same pot: boil 300 g potato chunks 15 min (Tuesday\u2019s lunch).'],
+    ['0:37','Chicken out. Cooked when there\u2019s no pink and the juices run clear. Let it cool, then slice into 3 boxes.'],
+    ['0:40','Make tzatziki: 200 g skyr, dill, garlic, lemon, salt (today\u2019s and Monday\u2019s lunch). Pack today\u2019s lunch.'],
+    ['0:45','Potatoes done: drain, cool, box for Tuesday. Rice into 2 boxes, into the fridge.'],
+    ['1:10','Chili done. Portion into 4: tonight, Monday (fridge), 2 to the freezer once cool (within 2 hours).',true],
+    ['Evening','Make Monday\u2019s overnight oats.'],
+  ]},
+  2:{n:'Cook 2', when:'Tuesday, alongside the salmon', len:'~35 min', steps:[
+    ['0:00','Oven 200\u00b0C fan. Microwave the sweet potato 5 min. Season 330 g chicken (Wednesday + Thursday lunches) on a tray.'],
+    ['0:05','Chicken in the oven (20\u201322 min). Pot 1: water on for pasta. Pot 2: 300 g potato chunks (Thursday), 15 min.'],
+    ['0:10','Salmon, sweet potato and courgette on a second tray, into the oven 12\u201315 min. Pot 1: 60 g pasta (Wednesday), ~10 min.'],
+    ['0:20','Pasta: drain, rinse cold, toss in a little oil, box. Potatoes: drain, cool, box. Mix 100 g tzatziki for Wednesday.'],
+    ['0:25','Salmon out \u2014 dinner. Chicken out when done; cool, slice, 2 boxes.'],
+  ]},
+  4:{n:'Cook 3', when:'Thursday, alongside the burrito bowl', len:'~35 min', steps:[
+    ['0:00','Oven 200\u00b0C fan. 330 g chicken (Friday + Saturday lunches) in, 20\u201322 min.'],
+    ['0:02','Pot 1: 45 g rice for tonight, 12\u201315 min. Pot 2: 300 g potato chunks (Saturday), 15 min.'],
+    ['0:15','Rice out. Pot 1: 60 g pasta (Friday), ~10 min. Pan: brown 100 g turkey with cumin, add beans, then scramble 3 eggs.'],
+    ['0:22','Build the burrito bowl \u2014 dinner.'],
+    ['0:25','Pasta: rinse cold, oil, box. Potatoes: drain, cool, box. Chicken out; cool, slice, 2 boxes. Mix 100 g tzatziki for Friday.'],
+  ]},
+};
+
+/* Template week, index 0 = Sunday */
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const WEEK = [
+  {B:'skyrbowl', L:'souv_rice',  D:'chili'},
+  {B:'oats',     L:'souv_rice',  D:'chili'},
+  {B:'scramble', L:'chickpot',   D:'salmon'},
+  {B:'skyrbowl', L:'souv_pasta', D:'stirfry'},
+  {B:'oats',     L:'chickpot',   D:'burrito'},
+  {B:'scramble', L:'souv_pasta', D:'salmon'},
+  {B:'skyrbowl', L:'chickpot',   D:'stirfry'},
+];
+const TASKS = [
+  ['Shop A at Aldi, Camden High St (Sunday hours 11–5).','Cook 1, ~75 min: chili (batch of 4 on cook weeks), 3 chicken portions, rice for today + Monday, potatoes for Tuesday.','Tonight: make Monday\u2019s overnight oats.'],
+  ['Tonight: move one salmon portion from freezer to fridge.'],
+  ['Cook 2, ~30 min while the salmon bakes: 2 chicken portions, pasta for Wednesday, potatoes for Thursday.'],
+  ['Shop B: top-up (Aldi, or Sainsbury\u2019s Local on Maiden Lane).','Tonight: make Thursday\u2019s overnight oats.'],
+  ['Cook 3, ~30 min: 2 chicken portions, pasta for Friday, potatoes for Saturday.','Tonight: move the second salmon portion to the fridge.'],
+  [],
+  [],
+];
+const SLOTS = ['B','L','D'];
+const SLOTNAME = {B:'Breakfast',L:'Lunch',D:'Dinner'};
+const CHILI_BASE = ['turkey','lentils','beans','tomatoes','onion','oil'];
+/* Which meals each shop covers: [dayIndex, slots] */
+const SHOP_A = [[0,['L','D','E']],[1,['B','L','D','E']],[2,['B','L','D','E']],[3,['B','L','D','E']]];
+const SHOP_B = [[4,['B','L','D','E']],[5,['B','L','D','E']],[6,['B','L','D','E']],[0,['B']]];
+
+/* ============================================================
+   STORAGE (all optional; the page works without it)
+   ============================================================ */
+const store = {
+  get(k,d){try{const v=localStorage.getItem('mp4:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('mp4:'+k,JSON.stringify(v))}catch(e){}}
+};
+function price(k){const o=store.get('prices',{})[k];return o?o.p:ING[k].price}
+function src(k){return store.get('prices',{})[k]?'checked':ING[k].src}
+
+/* ============================================================
+   CALCULATIONS
+   ============================================================ */
+function grams(k,q){return ING[k].unit==='each'?q*ING[k].g:q}
+function macros(ing){
+  const t=[0,0,0,0];
+  for(const k in ing){const g=grams(k,ing[k]);for(let i=0;i<4;i++)t[i]+=ING[k].m[i]*g/100}
+  return t;
+}
+const rmac = k => macros(R[k].ing);
+function dayRecipes(i,training){
+  const w=WEEK[i]; const list=[w.B,w.L,w.D,'eveshake'];
+  if(training) list.push(i%2?'banpb':'bandates');
+  return list;
+}
+function dayTotals(i,training){
+  const t=[0,0,0,0];
+  dayRecipes(i,training).forEach(r=>rmac(r).forEach((v,j)=>t[j]+=v));
+  return t;
+}
+function addTo(map,k,q){map[k]=(map[k]||0)+q}
+function shopNeeds(cover,chiliMode){
+  const m={};
+  cover.forEach(([d,slots])=>slots.forEach(s=>{
+    const r = s==='E'?'eveshake':WEEK[d][s];
+    for(const k in R[r].ing){
+      if(r==='chili' && CHILI_BASE.includes(k)) continue;
+      addTo(m,k,R[r].ing[k]);
+    }
+  }));
+  return m;
+}
+function shoppingLists(){
+  const chiliMode = store.get('chili','cook');
+  const a=shopNeeds(SHOP_A), b=shopNeeds(SHOP_B);
+  if(chiliMode==='cook') CHILI_BASE.forEach(k=>addTo(a,k,R.chili.ing[k]*4));
+  const lists={A:{},B:{},P:{}};
+  const all=new Set([...Object.keys(a),...Object.keys(b)]);
+  all.forEach(k=>{
+    const key = ING[k].asEgg?'egg':k;
+    const qa=a[k]||0, qb=b[k]||0;
+    if(ING[k].buy==='pantry'){addTo(lists.P,key,qa+qb)}
+    else if(ING[k].buy==='A'){addTo(lists.A,key,qa+qb)}
+    else {if(qa)addTo(lists.A,key,qa); if(qb)addTo(lists.B,key,qb)}
+  });
+  return lists;
+}
+function cost(k,q){return ING[k].unit==='each'?q*price(k):q/1000*price(k)}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const f0 = n => Math.round(n).toLocaleString('en-GB');
+const money = n => '£' + n.toFixed(2);
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const open = new Set();   // which cards are expanded (this session only)
+
+function qtyText(k,q){ const i=ING[k]; return i.unit==='each' ? Math.ceil(q-0.01)+'' : f0(q)+' '+(i.u||'g'); }
+function todayIndex(){ const d=new Date().getDay(); return store.get('late',false) ? (d+6)%7 : d; }
+function dateKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function effStore(k){ const o=store.get('storeAlt',{}); const w=WHERE[k]||{s:['aldi','sc']}; return o[k]?w.s[1]:w.s[0]; }
+function macroBar(t){
+  return `<div class="macro-bar">
+    <div class="mb-cell"><div class="mb-v">${f0(t[1])}g</div><div class="mb-l">Protein</div></div>
+    <div class="mb-cell"><div class="mb-v">${f0(t[2])}g</div><div class="mb-l">Carbs</div></div>
+    <div class="mb-cell"><div class="mb-v">${f0(t[3])}g</div><div class="mb-l">Fat</div></div>
+    <div class="mb-cell"><div class="mb-v">${f0(t[0])}</div><div class="mb-l">kcal</div></div></div>`;
+}
+function recipeCard(r, id, label){
+  const rc=R[r], t=rmac(r), m=META[r]||{};
+  return `<div class="meal ${open.has(id)?'open':''}" data-card="${id}">
+    <div class="meal-head">
+      <div class="meal-info"><div class="meal-time">${label}</div><div class="meal-name">${rc.n}</div></div>
+      <div class="meal-macros"><span>${f0(t[1])}p</span><span>${f0(t[0])}k</span></div>
+      <div class="meal-expand">▾</div>
+    </div>
+    <div class="meal-body">
+      <div class="meal-desc">${m.t?`<strong>${m.t}</strong><br>`:''}${m.why||''}</div>
+      <ul class="ing-list">${Object.entries(rc.ing).map(([k,q])=>`<li><span>${ING[k].n}</span><span class="q">${qtyText(k,q)}</span></li>`).join('')}</ul>
+      <ol class="steps">${rc.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+      <div class="prep-note">${rc.keep}</div>
+      ${macroBar(t)}
+    </div></div>`;
+}
+function bindCards(root){
+  root.querySelectorAll('[data-card] .meal-head').forEach(h=>h.onclick=()=>{
+    const c=h.parentElement, id=c.dataset.card;
+    open.has(id)?open.delete(id):open.add(id); c.classList.toggle('open');
+  });
+}
+function chiliThaw(i){
+  if(store.get('chili','cook')!=='freezer') return [];
+  if(i===6) return ['Chili is from the freezer this week: move one portion to the fridge tonight for Sunday.'];
+  if(i===0) return ['Tonight: move the second frozen chili portion to the fridge for Monday.'];
+  return [];
+}
+function cookHTML(i){
+  const c=COOK[i]; if(!c) return '';
+  const freezer=store.get('chili','cook')==='freezer';
+  const steps=c.steps.filter(s=>!(freezer&&s[2]));
+  return `<div class="sec-h"><h2>${c.n}</h2><div class="sec-sub">${c.len.replace(/\s*\(.*\)/,'')}</div></div>
+    <div class="cook-card"><div class="cook-when">${c.when}. ${c.len}.</div>
+    ${steps.map(s=>`<div class="tl"><div class="tl-t">${s[0]}</div><div>${s[1]}</div></div>`).join('')}</div>`;
+}
+
+/* ---------- Today ---------- */
+function renderToday(){
+  const i=todayIndex(), late=store.get('late',false);
+  const trainKey='train:'+dateKey(), training=store.get(trainKey,false);
+  const t=dayTotals(i,training), recipes=dayRecipes(i,training), now=new Date();
+  const slotLabel = r => R[r].slot + ((META[r]||{}).t && R[r].slot!=='Snack' ? '' : '');
+  const tasks=['Creatine, 5 g, any time.', ...TASKS[i], ...chiliThaw(i), 'Evening: magnesium, 300 mg.'];
+  const el=$('#tab-today');
+  el.innerHTML = `
+    ${late?`<div class="cb-active">Running one day behind: today follows <strong>${DAYS[i]}</strong>\u2019s plan. Turn this off in Week \u2192 Settings once you\u2019re back on the normal rhythm.</div>`:''}
+    <div class="mode-strip">
+      <button class="mode-btn ${!training?'active':''}" data-train="0">Rest day</button>
+      <button class="mode-btn ${training?'active':''}" data-train="1">Training day</button>
+    </div>
+    <div class="hero">
+      <div class="hero-row-1"><div class="hero-day">${DAYS[now.getDay()]}</div><div class="hero-kcal">${f0(t[0])} kcal</div></div>
+      <div class="hero-type">${now.toLocaleDateString('en-GB',{day:'numeric',month:'long'})} \u00b7 ${training?'Training day: snack added':'Rest day: three meals + evening shake'}</div>
+      ${macroBar(t)}
+    </div>
+    <div class="sec-h"><h2>Meals</h2><div class="sec-sub">${recipes.length} items</div></div>
+    ${recipes.map((r,n)=>recipeCard(r,'t'+n+r,slotLabel(r))).join('')}
+    <div class="sec-h"><h2>Also today</h2><div class="sec-sub">${tasks.length} items</div></div>
+    <div class="task-card">${tasks.map(x=>`<div class="task">${x}</div>`).join('')}</div>
+    ${cookHTML(i)}
+    <p class="foot">Targets: rest day ~2,100 kcal, training day ~2,300 kcal, ~190 g protein. Check your weekly average weight: losing faster than 0.5 kg a week for two weeks means add the snacks back.</p>`;
+  el.querySelectorAll('[data-train]').forEach(b=>b.onclick=()=>{store.set(trainKey,b.dataset.train==='1');renderToday()});
+  bindCards(el);
+}
+
+/* ---------- Week ---------- */
+function renderWeek(){
+  const ti=todayIndex(), late=store.get('late',false), chili=store.get('chili','cook');
+  const cards=WEEK.map((w,i)=>{
+    const t=dayTotals(i,false);
+    const pills=TASKS[i].map(x=>(x.match(/^(Shop [AB]|Cook \d)/)||[])[1]).filter(Boolean)
+      .map(p=>`<span class="pill ${p.startsWith('Shop')?'gold':'green'}">${p}</span>`).join('');
+    return `<div class="w-day-card ${i===ti?'is-today':''}">
+      <div class="wd-dot ${i===ti?'today':''}"></div>
+      <div class="wd-info"><div class="wd-dow">${DOW[i]} ${pills}</div>
+        <div class="wd-meals"><span>B</span>${R[w.B].n}<br><span>L</span>${R[w.L].n}<br><span>D</span>${R[w.D].n}</div></div>
+      <div class="wd-kcal">${f0(t[0])}<small>${f0(t[1])}g P</small></div></div>`;
+  }).join('');
+  $('#tab-week').innerHTML = `
+    <div class="sec-h"><h2>This week</h2><div class="sec-sub">Rest-day totals</div></div>
+    <p class="intro">Two shops, three short cook sessions. Rice is eaten within a day of cooking, everything else within two. A training-day snack adds ~190\u2013230 kcal.</p>
+    ${cards}
+    <div class="sec-h"><h2>Settings</h2></div>
+    <div class="settings-row"><div><div class="sr-label">Running one day late</div><div class="sr-sub">Today follows yesterday\u2019s plan. Use it for weeks like this one.</div></div>
+      <button class="sr-action" id="lateBtn">${late?'On':'Off'}</button></div>
+    <div class="settings-row"><div><div class="sr-label">Chili this week</div><div class="sr-sub">Alternates: cook a batch of 4 one week, eat the frozen 2 the next. Changes Shop A and Cook 1.</div></div>
+      <button class="sr-action" id="chiliBtn">${chili==='cook'?'Cook 4':'Freezer'}</button></div>`;
+  $('#lateBtn').onclick=()=>{store.set('late',!late);renderAll()};
+  $('#chiliBtn').onclick=()=>{store.set('chili',chili==='cook'?'freezer':'cook');renderAll()};
+}
+
+/* ---------- Recipes ---------- */
+function renderRecipes(){
+  const groups=['Breakfast','Lunch','Dinner','Evening','Snack'];
+  const el=$('#tab-recipes');
+  el.innerHTML = `<p class="intro">Weigh rice, pasta and oats dry and meat raw. Every number is calculated from the ingredient table, so changing an amount updates the whole plan.</p>` +
+    groups.map(g=>{
+      const list=Object.keys(R).filter(k=>R[k].slot===g);
+      return `<div class="sec-h"><h2>${g}</h2><div class="sec-sub">${list.length} recipe${list.length>1?'s':''}</div></div>` +
+        list.map(k=>recipeCard(k,'r'+k,(META[k]||{}).t||g)).join('');
+    }).join('');
+  bindCards(el);
+}
+
+/* ---------- Shop ---------- */
+function renderShop(){
+  const L=shoppingLists(), which=store.get('shopTab','A'), map=L[which];
+  const ticks=store.get('ticks:'+which,{}), alt=store.get('storeAlt',{});
+  const intro={
+    A:'Sunday. Covers Sunday lunch to Wednesday dinner, plus things bought once a week (salmon, eggs, potatoes, frozen berries).',
+    B:'Wednesday. Covers Thursday to Saturday, plus next Sunday\u2019s breakfast.',
+    P:'Long-life staples. Amounts are this week\u2019s use, so restock when low. First trip only: cumin, chili powder, smoked paprika, garlic powder, dried dill.'}[which];
+  const byStore={}; let total=0;
+  Object.keys(map).forEach(k=>{(byStore[effStore(k)]=byStore[effStore(k)]||[]).push(k)});
+  const order=['aldi','sc','local','ice','web'];
+  const blocks=order.filter(s=>byStore[s]).map(s=>{
+    const items=byStore[s].sort((a,b)=>ING[a].n.localeCompare(ING[b].n)).map(k=>{
+      const q=map[k], i=ING[k], w=WHERE[k]||{}, c=cost(k,q); total+=c;
+      const packs=i.pack?` \u00b7 ${Math.ceil(q/i.pack[0]-0.05)} \u00d7 ${i.pack[1]}`:'';
+      const flag=w.st==='check'&&!alt[k]?' <span class="pill amber">Confirm</span>':'';
+      return `<div class="groc-item ${ticks[k]?'checked':''}" data-k="${k}">
+        <div class="g-check"></div>
+        <div class="g-body"><div class="g-name">${i.n}${flag}</div>
+          <div class="g-meta">${qtyText(k,q)}${k==='egg'?' eggs':''}${packs}</div>
+          ${w.note?`<div class="g-note">${w.note}</div>`:''}</div>
+        <div class="g-price">${money(c)}</div></div>`;
+    }).join('');
+    return `<div class="store"><div class="store-h">${STORES[s].short}</div><div class="store-sub">${STORES[s].n}</div>${items}</div>`;
+  }).join('');
+  const supps = which==='P' ? `<div class="store"><div class="store-h">Supplements</div><div class="store-sub">Monthly, not in the food cost</div>
+    ${SUPPS.map(x=>`<div class="groc-item" style="cursor:default"><div class="g-body"><div class="g-name">${x.n}</div><div class="g-meta">${x.d}</div><div class="g-note">${x.where}</div></div></div>`).join('')}</div>` : '';
+  const el=$('#tab-shop');
+  el.innerHTML = `
+    <div class="groc-toggle">${['A','B','P'].map(x=>`<button class="${x===which?'active':''}" data-shop="${x}">${{A:'Shop A',B:'Shop B',P:'Pantry'}[x]}</button>`).join('')}</div>
+    <p class="intro">${intro}</p>
+    ${blocks}${supps}
+    <div class="total">Food used from this list: ${money(total)}<small>Receipts run higher, since you buy whole packs. Training-day snacks add a banana and some dates or peanut butter per session.</small></div>
+    <div style="text-align:center;margin-top:1rem"><button class="sr-action" id="clearTicks">Clear ticks</button></div>`;
+  el.querySelectorAll('[data-shop]').forEach(b=>b.onclick=()=>{store.set('shopTab',b.dataset.shop);renderShop()});
+  el.querySelectorAll('.groc-item[data-k]').forEach(g=>g.onclick=()=>{const t=store.get('ticks:'+which,{});t[g.dataset.k]=!t[g.dataset.k];store.set('ticks:'+which,t);renderShop()});
+  $('#clearTicks').onclick=()=>{store.set('ticks:'+which,{});renderShop()};
+}
+
+/* ---------- Prices ---------- */
+function renderPrices(){
+  const L=shoppingLists();
+  const weekly=['A','B','P'].reduce((s,x)=>s+Object.entries(L[x]).reduce((a,[k,q])=>a+cost(k,q),0),0);
+  const alt=store.get('storeAlt',{});
+  const pillFor={checked:'green',online:'gold',guess:'amber'};
+  const rows=Object.keys(ING).filter(k=>!ING[k].asEgg).map(k=>{
+    const w=WHERE[k], s=src(k);
+    const sw = w && w.s[0]!==w.s[1] ? ` \u00b7 <button class="link" data-alt="${k}">${alt[k]?'back to '+STORES[w.s[0]].short:STORES[w.s[0]].short+' doesn\u2019t have it'}</button>` : '';
+    return `<div class="settings-row"><div><div class="sr-label">${ING[k].n}</div><div class="sr-sub">${STORES[effStore(k)].short}${sw}</div></div>
+      <div class="price-r"><input class="price-in" inputmode="decimal" data-price="${k}" value="${price(k).toFixed(2)}" aria-label="${ING[k].n} price"><span class="pill ${pillFor[s]}">${s}</span></div></div>`;
+  }).join('');
+  $('#tab-prices').innerHTML = `
+    <div class="sec-h"><h2>Prices</h2><div class="sec-sub">\u00a3 per kg \u00b7 per item for eggs, bananas</div></div>
+    <p class="intro">Type in the shelf price and the item is marked <span class="pill green">checked</span>. Every cost updates. If a store doesn\u2019t stock something, tap the link under it and it moves to its fallback store. The four that matter most: skyr, chicken, turkey mince, salmon.</p>
+    <div class="hero"><div class="hero-row-1"><div class="hero-day">Weekly food</div><div class="hero-kcal">${money(weekly)}</div></div></div>
+    ${rows}
+    <div style="margin-top:1.25rem"><button class="sr-action danger" id="resetPrices">Reset prices and stores</button></div>`;
+  document.querySelectorAll('[data-price]').forEach(inp=>inp.onchange=()=>{
+    const v=parseFloat(inp.value); if(isNaN(v)||v<0){inp.value=price(inp.dataset.price).toFixed(2);return}
+    const p=store.get('prices',{}); p[inp.dataset.price]={p:v,date:dateKey()}; store.set('prices',p); renderAll();
+  });
+  document.querySelectorAll('[data-alt]').forEach(b=>b.onclick=()=>{const o=store.get('storeAlt',{});o[b.dataset.alt]=!o[b.dataset.alt];store.set('storeAlt',o);renderAll()});
+  $('#resetPrices').onclick=()=>{ if(confirm('Reset all prices and store choices to the defaults?')){store.set('prices',{});store.set('storeAlt',{});renderAll()} };
+}
+
+function renderAll(){renderToday();renderWeek();renderRecipes();renderShop();renderPrices()}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t.dataset.tab));
+  window.scrollTo(0,0);
+}));
+renderAll();
+</script>
+</body>
+</html>
